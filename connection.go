@@ -1,12 +1,12 @@
 package amp
 
-import "go/cmn"
+import "log"
 import "bytes"
 import "errors"
 import "fmt"
 
 func (c *Connection) Close() {
-    cmn.Log("Closing connection")    
+    log.Println("Closing connection")    
     c.Conn.Close()    
 }
 
@@ -39,19 +39,19 @@ func (c *Connection) CallRemote(command *Command, args *map[string]string, callb
     tag := fmt.Sprintf("%x", counter)
     m[ASK] = tag
     m[COMMAND] = command.Name
-    cmn.Log("CallRemote",m)
+    log.Println("CallRemote",m)
     answer := &AnswerBox{nil, nil, command, callback}
     // XXX need to add callback variables eventually
     c.Protocol.Callbacks[tag] = answer
     send := PackMap(args)    
     _, err := c.Conn.Write(*send)    
-    if err != nil { close(callback); cmn.Log("error sending:",err); return "", err }    
+    if err != nil { close(callback); log.Println("error sending:",err); return "", err }    
     return tag, nil
 }
 
 func (c *Connection) IncomingAnswer(data *map[string]string) error {
     m := *data    
-    cmn.Log("IncomingAnswer",m)
+    log.Println("IncomingAnswer",m)
     tag := m[ANSWER]
     if answer, ok := c.Protocol.Callbacks[tag]; !ok {
         msg := fmt.Sprintf("callback for incoming answer `%x` not found", tag)
@@ -65,7 +65,7 @@ func (c *Connection) IncomingAnswer(data *map[string]string) error {
             answer.Response = data
             select {
                 case answer.Callback <- answer:
-                    //cmn.Log("sent ask to callback")                                
+                    //log.Println("sent ask to callback")                                
                 default:
                     msg := fmt.Sprintf("Incoming Answer command `%s`'s callback is not responding.",answer.Command.Name)
                     return errors.New(msg)
@@ -115,10 +115,10 @@ func (c *Connection) Reader() {
         bytesRead, error := c.Conn.Read(buffer)        
         if error != nil {
             c.Close()
-            cmn.Log("c.Conn.Read error -",error)
+            log.Println("c.Conn.Read error -",error)
             break
         }
-        //cmn.Log("Read ", bytesRead, " bytes:",string(buffer[:bytesRead]))  
+        //log.Println("Read ", bytesRead, " bytes:",string(buffer[:bytesRead]))  
                               
         dataList := UnpackMaps(&buffer, bytesRead)
         //PrintList(dataList)
@@ -133,18 +133,18 @@ func (c *Connection) Reader() {
             if _,ok := m[ASK]; ok {
                 err := c.IncomingAsk(data)
                 if err != nil {
-                    cmn.Log(err)
+                    log.Println(err)
                 }
             } else if _,ok := m[ANSWER]; ok {
                 err := c.IncomingAnswer(data)
                 if err != nil {
-                    cmn.Log(err)
+                    log.Println(err)
                 }
             } else {
-                cmn.Log("got packet that does not make sense",m)
+                log.Println("got packet that does not make sense",m)
             }
         }
     } 
-    cmn.Log("ClientReader stopped for ", c.Name)
+    log.Println("ClientReader stopped for ", c.Name)
 }
 

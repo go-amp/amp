@@ -1,15 +1,15 @@
 package amp
 
-import "go/cmn"
+import "log"
 import "container/list"
 import "encoding/binary"
 
 var PREFIXLENGTH = 2
 
 func PrintList(l *list.List) {
-    cmn.Log("PrintList..")
+    log.Println("PrintList..")
     for e := l.Front(); e != nil; e = e.Next() {
-        cmn.Log(e.Value)
+        log.Println(e.Value)
     }
 }
 
@@ -17,7 +17,7 @@ func UnpackMaps(buffer *[]byte, length int) *list.List {
     /*
      * Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
      * */
-    //cmn.Log("UnpackMap",length)
+    //log.Println("UnpackMap",length)
     b := *buffer
     var i int = 0  
     retList := list.New()
@@ -43,17 +43,17 @@ func UnpackMaps(buffer *[]byte, length int) *list.List {
                 if i >= length { break outer }
                 value := string(b[i:i+prefix])
                 i += prefix
-                //cmn.Log("unpacked -",key,":",value)
+                //log.Println("unpacked -",key,":",value)
                 ret[string(key)] = string(value)
             }
-            //cmn.Log("breaking early",ret)
+            //log.Println("breaking early",ret)
             retList.PushBack(&ret)                    
         }
     return retList
 }
 
 func PackMap(m *map[string]string) *[]byte {
-    cmn.Log("packing - ",*m)                       
+    log.Println("packing - ",*m)                       
     length := 0
     for k, v := range *m {         
         length += len(k)
@@ -62,7 +62,7 @@ func PackMap(m *map[string]string) *[]byte {
         length += PREFIXLENGTH
         // 2 is prefixLength
     }
-    //cmn.Log("length is",length)
+    //log.Println("length is",length)
     var array = make([]byte, length + PREFIXLENGTH)
     /*
      * 2 null terminating bytes 
@@ -77,7 +77,7 @@ func PackMap(m *map[string]string) *[]byte {
          * */
         length = len(k)
         binary.BigEndian.PutUint16(prefix, uint16(length))
-        //cmn.Log(buf)
+        //log.Println(buf)
         stop = start + PREFIXLENGTH
         copy(array[start:stop], prefix)
         start = stop
@@ -88,7 +88,7 @@ func PackMap(m *map[string]string) *[]byte {
          * */
         length = len(v)
         binary.BigEndian.PutUint16(prefix, uint16(length))
-        //cmn.Log(buf)
+        //log.Println(buf)
         stop = start + PREFIXLENGTH
         copy(array[start:stop], prefix)
         start = stop
@@ -96,13 +96,13 @@ func PackMap(m *map[string]string) *[]byte {
         copy(array[start:stop], v)
         start = stop        
     }
-    //cmn.Log(array)
+    //log.Println(array)
     return &array
     
 }
 
 func UnpackList(b string) *list.List {
-    //cmn.Log("unpacking - ",b)                    
+    //log.Println("unpacking - ",b)                    
     var i int = 0    
     ret := list.New()
     // list is a linked list
@@ -112,7 +112,7 @@ func UnpackList(b string) *list.List {
         prefix := int(binary.BigEndian.Uint16(prefixBytes))        
         if prefix == 0 { break }
         value := b[i:i+prefix]
-        //cmn.Log("string",value)
+        //log.Println("string",value)
         i += prefix        
         ret.PushBack(value)
     }
@@ -121,7 +121,7 @@ func UnpackList(b string) *list.List {
 }
 
 func PackList(l *list.List) *[]byte {
-    //cmn.Log("Packing..")
+    //log.Println("Packing..")
     length := 0
     for e := l.Front(); e != nil; e = e.Next() {
         val := e.Value        
@@ -137,7 +137,7 @@ func PackList(l *list.List) *[]byte {
         val := e.Value        
         length = len(val.(string))
         binary.BigEndian.PutUint16(prefix, uint16(length))
-        //cmn.Log(buf)
+        //log.Println(buf)
         stop = start + PREFIXLENGTH
         copy(array[start:stop], prefix)
         start = stop
@@ -145,6 +145,6 @@ func PackList(l *list.List) *[]byte {
         copy(array[start:stop], val.(string))
         start = stop        
     }
-    //cmn.Log(array)
+    //log.Println(array)
     return &array
 }

@@ -4,7 +4,7 @@ package amp
  * implements amp_diagram.svg
  * */
  
-import "go/cmn"
+import "log"
 import "net"
 import "fmt"
  
@@ -26,7 +26,7 @@ func (ask *AskBox) Reply() error {
     var err error
     err = CheckArgs(&ask.Command.Response, ask.Response)
     if err != nil {
-        cmn.Log("reply failed!",err)
+        log.Println("reply failed!",err)
         // XXX Need to send error box here
         return err
     }    
@@ -35,7 +35,7 @@ func (ask *AskBox) Reply() error {
     _, err = ask.Client.Conn.Write(*send)    
     // XXX need to handle cleanup of connection for error here
     if err != nil {
-        cmn.Log("reply failed!",err)
+        log.Println("reply failed!",err)
         return err
     }
     return nil
@@ -44,20 +44,20 @@ func (ask *AskBox) Reply() error {
 func (prot *AMP) connectionListener(netListen net.Listener, service string) {
     clientNum := 0
     defer netListen.Close()
-    cmn.Log("Waiting for clients") 
+    log.Println("Waiting for clients") 
     for {
         conn, err := netListen.Accept()
         if err != nil {
-            cmn.Log("Client error: ", err)
+            log.Println("Client error: ", err)
             break
         } else {
             clientNum += 1
             name := fmt.Sprintf("<%s<-%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())
-            cmn.Log("AMP.connectionListener accepted",name)
+            log.Println("AMP.connectionListener accepted",name)
             quitChannel := make(chan bool)
-            cmn.Log("name is",name)
+            log.Println("name is",name)
             newClient := &Connection{name, conn, prot, quitChannel, false} 
-            cmn.Log("Connection created",newClient)
+            log.Println("Connection created",newClient)
             go newClient.Reader()
         }
     }
@@ -74,13 +74,13 @@ func (prot *AMP) BoxCounterIncrementer() {
 func (prot *AMP) ListenTCP(service string) error {
     tcpAddr, err := net.ResolveTCPAddr("tcp", service) 
     if err != nil {
-        cmn.Log("Error: Could not resolve address")
+        log.Println("Error: Could not resolve address")
         return err
     } else {
-        cmn.Log("ListenTCP",*tcpAddr)
+        log.Println("ListenTCP",*tcpAddr)
         netListen, err := net.Listen(tcpAddr.Network(), tcpAddr.String())
         if err != nil {
-            cmn.Log("Error: could not listen")
+            log.Println("Error: could not listen")
             return err
         } else {
             go prot.connectionListener(netListen, service)
@@ -90,18 +90,18 @@ func (prot *AMP) ListenTCP(service string) error {
 }
 
 func (prot *AMP) ConnectTCP(service string) (*Connection, error) {
-    cmn.Log("ConnectTCP",service)
+    log.Println("ConnectTCP",service)
     conn, err := net.Dial("tcp", service)
     if err != nil {
-        cmn.Log("error!",err)
+        log.Println("error!",err)
         return nil, err
     }
     name := fmt.Sprintf("<%s->%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())    
-    cmn.Log("AMP.ConnectTCP connected",name)
+    log.Println("AMP.ConnectTCP connected",name)
     quitChannel := make(chan bool)    
     newClient := &Connection{name, conn, prot, quitChannel, false} 
     go newClient.Reader()
-    cmn.Log("name is",newClient)
+    log.Println("name is",newClient)
     return newClient, nil
 }
 
@@ -111,7 +111,7 @@ func Init(commands *map[string]*Command) *AMP {
     callbacks := make(map[string]*AnswerBox)    
     prot := &AMP{connList, *commands, boxCounter, callbacks, make(chan chan int)} 
     go prot.BoxCounterIncrementer()
-    cmn.Log("AMP initialized.")   
+    log.Println("AMP initialized.")   
     return prot
 }
 
