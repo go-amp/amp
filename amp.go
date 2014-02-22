@@ -90,7 +90,7 @@ func (prot *AMP) ListenTCP(service string) error {
 }
 
 func (prot *AMP) ConnectTCP(service string) (*Connection, error) {
-    log.Println("ConnectTCP",service)
+    //log.Println("ConnectTCP",service)
     conn, err := net.Dial("tcp", service)
     if err != nil {
         log.Println("error!",err)
@@ -101,7 +101,7 @@ func (prot *AMP) ConnectTCP(service string) (*Connection, error) {
     quitChannel := make(chan bool)    
     newClient := &Connection{name, conn, prot, quitChannel, false} 
     go newClient.Reader()
-    log.Println("name is",newClient)
+    //log.Println("name is",newClient)
     return newClient, nil
 }
 
