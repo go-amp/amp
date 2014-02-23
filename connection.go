@@ -6,7 +6,7 @@ import "errors"
 import "fmt"
 
 func (c *Connection) Close() {
-    log.Println("Closing connection")    
+    //log.Println("Closing connection")    
     c.Conn.Close()    
 }
 
@@ -39,7 +39,7 @@ func (c *Connection) CallRemote(command *Command, args *map[string]string, callb
     tag := fmt.Sprintf("%x", counter)
     m[ASK] = tag
     m[COMMAND] = command.Name
-    log.Println("CallRemote",m)
+    //log.Println("CallRemote",m)
     answer := &AnswerBox{nil, nil, command, callback}
     // XXX need to add callback variables eventually
     c.Protocol.Callbacks[tag] = answer
@@ -51,7 +51,7 @@ func (c *Connection) CallRemote(command *Command, args *map[string]string, callb
 
 func (c *Connection) IncomingAnswer(data *map[string]string) error {
     m := *data    
-    log.Println("IncomingAnswer",m)
+    //log.Println("IncomingAnswer",m)
     tag := m[ANSWER]
     if answer, ok := c.Protocol.Callbacks[tag]; !ok {
         msg := fmt.Sprintf("callback for incoming answer `%x` not found", tag)
@@ -115,7 +115,7 @@ func (c *Connection) Reader() {
         bytesRead, error := c.Conn.Read(buffer)        
         if error != nil {
             c.Close()
-            log.Println("c.Conn.Read error -",error)
+            //log.Println("c.Conn.Read error -",error)
             break
         }
         //log.Println("Read ", bytesRead, " bytes:",string(buffer[:bytesRead]))  
@@ -133,18 +133,18 @@ func (c *Connection) Reader() {
             if _,ok := m[ASK]; ok {
                 err := c.IncomingAsk(data)
                 if err != nil {
-                    log.Println(err)
+                    //log.Println(err)
                 }
             } else if _,ok := m[ANSWER]; ok {
                 err := c.IncomingAnswer(data)
                 if err != nil {
-                    log.Println(err)
+                    //log.Println(err)
                 }
             } else {
-                log.Println("got packet that does not make sense",m)
+                //log.Println("got packet that does not make sense",m)
             }
         }
     } 
-    log.Println("ClientReader stopped for ", c.Name)
+    //log.Println("ClientReader stopped for ", c.Name)
 }
 

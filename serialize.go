@@ -1,17 +1,17 @@
 package amp
 
-import "log"
+//import "log"
 import "container/list"
 import "encoding/binary"
 
 var PREFIXLENGTH = 2
 
-func PrintList(l *list.List) {
-    log.Println("PrintList..")
-    for e := l.Front(); e != nil; e = e.Next() {
-        log.Println(e.Value)
-    }
-}
+//func PrintList(l *list.List) {
+    ////log.Println("PrintList..")
+    //for e := l.Front(); e != nil; e = e.Next() {
+        //log.Println(e.Value)
+    //}
+//}
 
 func UnpackMaps(buffer *[]byte, length int) *list.List {
     /*
@@ -53,7 +53,7 @@ func UnpackMaps(buffer *[]byte, length int) *list.List {
 }
 
 func PackMap(m *map[string]string) *[]byte {
-    log.Println("packing - ",*m)                       
+    //log.Println("packing - ",*m)                       
     length := 0
     for k, v := range *m {         
         length += len(k)
