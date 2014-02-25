@@ -22,24 +22,7 @@ var COMMAND = "_command"
 //var MAX_VALUE_LENGTH = 0xffff
 
 
-func (ask *AskBox) Reply() error {    
-    var err error
-    err = CheckArgs(&ask.Command.Response, ask.Response)
-    if err != nil {
-        log.Println("reply failed!",err)
-        // XXX Need to send error box here
-        return err
-    }    
-    send := PackMap(ask.Response)    
-    //UnpackMap(send,len(*send))
-    _, err = ask.Client.Conn.Write(*send)    
-    // XXX need to handle cleanup of connection for error here
-    if err != nil {
-        log.Println("reply failed!",err)
-        return err
-    }
-    return nil
-}
+
 
 func (prot *AMP) connectionListener(netListen net.Listener, service string) {
     clientNum := 0
@@ -53,12 +36,10 @@ func (prot *AMP) connectionListener(netListen net.Listener, service string) {
         } else {
             clientNum += 1
             name := fmt.Sprintf("<%s<-%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())
-            log.Println("AMP.connectionListener accepted",name)
-            quitChannel := make(chan bool)
-            log.Println("name is",name)
-            newClient := &Connection{name, conn, prot, quitChannel, false} 
-            log.Println("Connection created",newClient)
-            go newClient.Reader()
+            log.Println("AMP.connectionListener accepted",name)            
+            //log.Println("name is",name)
+            ClientCreator(&name, &conn, prot)
+            //log.Println("Client created",newClient)            
         }
     }
 }
@@ -89,7 +70,7 @@ func (prot *AMP) ListenTCP(service string) error {
     return nil
 }
 
-func (prot *AMP) ConnectTCP(service string) (*Connection, error) {
+func (prot *AMP) ConnectTCP(service string) (*Client, error) {
     //log.Println("ConnectTCP",service)
     conn, err := net.Dial("tcp", service)
     if err != nil {
@@ -98,17 +79,19 @@ func (prot *AMP) ConnectTCP(service string) (*Connection, error) {
     }
     name := fmt.Sprintf("<%s->%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())    
     log.Println("AMP.ConnectTCP connected",name)
-    quitChannel := make(chan bool)    
-    newClient := &Connection{name, conn, prot, quitChannel, false} 
-    go newClient.Reader()
+        
+    newClient := ClientCreator(&name, &conn, prot) 
     //log.Println("name is",newClient)
     return newClient, nil
 }
 
+func init() {
+}
+
 func Init(commands *map[string]*Command) *AMP {
-    connList := make(map[string]*Connection)
+    connList := make(map[string]*Client)
     boxCounter := 0
-    callbacks := make(map[string]*AnswerBox)    
+    callbacks := make(map[string]*CallBox)    
     prot := &AMP{connList, *commands, boxCounter, callbacks, make(chan chan int)} 
     go prot.BoxCounterIncrementer()
     log.Println("AMP initialized.")   

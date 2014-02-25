@@ -1,52 +1,42 @@
 package amp
-
-/*
- * implements amp_diagram.svg
- * */
  
 import "net"
- 
-
-type AnswerBox struct {
-    Response *map[string]string    
-    Error error
-    Command *Command
-    Callback chan *AnswerBox
-}
-
-type AskBox struct {
-    Arguments *map[string]string
-    Response *map[string]string
-    Client *Connection
-    Command *Command
-}
 
 type Command struct {
     Name string
-    Responder chan *AskBox
+    Responder chan *Ask
     Arguments []string
     Response []string
 }
 
+type Ask struct {
+    Arguments *map[string]string
+    Response *map[string]string
+    ReplyChannel chan *Ask    
+}
+
+type CallBox struct {
+    Arguments *map[string]string
+    Response *map[string]string
+    Command *Command    
+    Callback chan *CallBox
+    CallbackArgs *interface{}
+}
+
 type AMP struct {
-    ConnList map[string]*Connection
+    ConnList map[string]*Client
     Commands map[string]*Command
     BoxCounter int
-    Callbacks map[string]*AnswerBox
-    GetBoxCounter chan chan int
-    //ListenTCP chan string
-    //ConnectTCP chan string
+    Callbacks map[string]*CallBox
+    GetBoxCounter chan chan int    
 }
 
-type ClientCreator struct {
-    Name string
-    Service string
-}
-
-type Connection struct {
+type Client struct {
     Name string
     Conn net.Conn
     Protocol *AMP
     Quit chan bool
     Closed bool
+    incoming_handler chan *map[string]string
+    reply_handler chan *Ask
 }
