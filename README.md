@@ -1,4 +1,7 @@
-status: *broken
+/*
+ * Status: pre-pre-beta
+ * Needs test cases.  Does not handle error boxes.
+ */
 
 amp
 ===
