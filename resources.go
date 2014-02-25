@@ -2,9 +2,9 @@ package amp
 
 //import "log" 
 
-var map_resource chan *map[string]string = make(chan *map[string]string, 5)
-var askbox_resource chan *Ask = make(chan *Ask, 5)
-var callbox_resource chan *CallBox = make(chan *CallBox, 5)
+var map_resource chan *map[string]string = make(chan *map[string]string, 100)
+var askbox_resource chan *Ask = make(chan *Ask, 100)
+var callbox_resource chan *CallBox = make(chan *CallBox, 100)
 
 func resourceMap() *map[string]string {
     var m *map[string]string    
