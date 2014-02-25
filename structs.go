@@ -28,7 +28,6 @@ type AMP struct {
     Commands map[string]*Command
     BoxCounter int
     Callbacks map[string]*CallBox
-    GetBoxCounter chan chan int    
 }
 
 type Client struct {

@@ -46,29 +46,26 @@ func ClientCreator(name *string, conn *net.Conn, prot *AMP) *Client {
     return client
 }
 
-func (c *Client) CallRemote(call *CallBox) (string, error) { 
-    fetch := make(chan int)
-    c.Protocol.GetBoxCounter <- fetch
-    counter := <- fetch
-    close(fetch)
-    tag := fmt.Sprintf("%x", counter)
+func (c *Client) CallRemote(call *CallBox) (string, error) {     
+    tag := c.Protocol.GetBoxCounter()
     m := *call.Arguments    
     m[ASK] = tag
     m[COMMAND] = call.Command.Name
     send := PackMap(call.Arguments)    
     _, err := c.Conn.Write(*send)    
-    if err != nil { RecycleCallBox(call); log.Println("error sending:",err); return "", err }    
-    c.Protocol.Callbacks[tag] = call    
-    //log.Println("callremote",call)
+    if err != nil { RecycleCallBox(call); log.Println("error sending:",err); return "", err 
+        }  else { c.Protocol.AssignCall(tag, call) }    
     return tag, nil
 }
+
+
 
 func (c *Client) IncomingAnswer(data *map[string]string) error {    
     m := *data        
     //log.Println("Incoming answer..",m)
     tag := m[ANSWER]
-    if answer, ok := c.Protocol.Callbacks[tag]; !ok {
-        msg := fmt.Sprintf("callback for incoming answer `%x` not found", tag)
+    if answer, ok := c.Protocol.GetCall(tag); !ok {
+        msg := fmt.Sprintf("callback for incoming answer `%x` not found!!", tag)
         return errors.New(msg)
     } else {                
         answer.Response = data   
