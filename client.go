@@ -6,6 +6,9 @@ import "errors"
 import "fmt"
 import "net"
 import "runtime"
+//import "encoding/binary"
+
+const READ_BUFFER_SIZE int = 81920
 
 func (c *Client) Close() {
     //log.Println("Closing connection")
@@ -74,10 +77,11 @@ func (c *Client) IncomingAnswer(data *map[string]string) error {
             select {    
                 case answer.Callback <- answer:
                     break outer
-                default:
-                    log.Println("callback is not responding!!!", answer,"try",i,"buffer length",len(answer.Callback))
-                    runtime.Gosched()     
+                default:                    
+                    if i == 9 { log.Println("callback is not responding!!!", answer,"try",i,"buffer length",len(answer.Callback)) }
+                    runtime.Gosched()                         
             }
+            
         }        
     }
     return nil
@@ -107,7 +111,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                         //log.Println("sent command ask",ask)
                         break outer
                     default:
-                        log.Println("command's responder not responding!!",command,ask,"try",i,"buffer length",len(command.Responder))                             
+                        if i == 9 { log.Println("command's responder not responding!!",command,ask,"try",i,"buffer length",len(command.Responder)) }                                                
                         runtime.Gosched()               
                 }        
             }
@@ -146,8 +150,8 @@ func (c *Client) IncomingHandler() {
     }
 }
 
-func (c *Client) Reader() {
-    buffer := make([]byte, 81920)
+func (c *Client) OldReader() {
+    buffer := make([]byte, READ_BUFFER_SIZE)
     for {        
         bytesRead, error := c.Conn.Read(buffer)        
         if error != nil {
@@ -155,10 +159,50 @@ func (c *Client) Reader() {
             break
         }                              
         //log.Println("received",bytesRead,"bytes")
-        UnpackMaps(&buffer, bytesRead, c.incoming_handler)        
+        UnpackMaps(&buffer, bytesRead, c.incoming_handler)
+        
         for i := 0; i <= bytesRead; i++ {
             buffer[i] = 0x00
         }            
     }     
+}
+
+func (c *Client) Reader() {
+    //buffer := make([][]byte, 1)
+    buffer := make([]byte, READ_BUFFER_SIZE)
+    //over := make([]byte, READ_BUFFER_SIZE)
+    //b_over := make([]byte, READ_BUFFER_SIZE)
+    //b_over_length := 0
+    //buf_index := 0
+    //var index_buf, index_over, l_message, l_overflow int
+    var overflow int = 0    
+    for {
+        readBytes, error := c.Conn.Read(buffer) 
+        if error != nil {
+            c.Close()         
+            break
+        }
+        
+                        
+        
+        overflow = UnpackMaps(&buffer, readBytes, c.incoming_handler)
+        log.Println("received",readBytes,"bytes",error, overflow) 
+        if overflow > 0 {
+            overflowed := READ_BUFFER_SIZE - overflow
+            log.Fatal("overflow ",overflowed)
+        }
+        //if l_overflow > 0 {
+            //copy(over[index_over:index_over+length_remaining], buf[:length_remaining])
+            //index_buf = length_remaining
+            //UnpackMaps(&over, index_over+length_remaining, c.incoming_handler)
+        //} else { index_buf = 0 }
+                
+        
+               
+        
+        for k := 0; k <= readBytes; k++ {
+            buffer[k] = 0x00
+        }
+    }
 }
 

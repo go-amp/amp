@@ -1,12 +1,12 @@
 package amp
 
-//import "log"
+import "log"
 //import "container/list"
 import "encoding/binary"
 
 var PREFIXLENGTH = 2
 
-func UnpackMaps(buffer *[]byte, length int, incoming_handler chan *map[string]string)  {
+func UnpackMapsOld(buffer *[]byte, length int, incoming_handler chan *map[string]string)  {
     /*
      * Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
      * */
@@ -14,6 +14,11 @@ func UnpackMaps(buffer *[]byte, length int, incoming_handler chan *map[string]st
     b := *buffer
     var i int = 0  
     //retList := list.New()
+    defer func() {
+        if r := recover(); r != nil {
+            log.Fatal("Recovered in f", r, b, i, length)
+        }
+    }()
         
     outer: 
         for {
@@ -45,6 +50,66 @@ func UnpackMaps(buffer *[]byte, length int, incoming_handler chan *map[string]st
             incoming_handler <- &ret
         }
     //return retList
+}
+
+
+func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string]string) (int) {
+    /*
+     * Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
+     * */
+    //log.Println("UnpackMap",length)
+    b := *buffer
+    i := 0
+    message_start := 0
+    //retList := list.New()
+    defer func() {
+        if r := recover(); r != nil {
+            log.Fatal("Recovered in f", r, b, i, readBytes, message_start)
+        }
+    }()
+        
+   
+    for {            
+        message_start = i
+        ret := *resourceMap()      
+        for {                
+            
+            // message overflow
+            if i + PREFIXLENGTH > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            
+            prefixBytes := []byte{b[i], b[i+1]}
+            i += PREFIXLENGTH        
+            prefix := int(binary.BigEndian.Uint16(prefixBytes))        
+            
+            // indicates end of incoming message
+            if prefix == 0 { if i >= readBytes { incoming_handler <- &ret; return 0 } else { break } }                            
+            // message overflow
+            if i + prefix > readBytes { recycleMap(&ret); return message_start }
+            
+            // handling key 
+            key := string(b[i:i+prefix])
+            i += prefix                
+            // message overflow
+            if i + PREFIXLENGTH > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            
+            // handling value
+            prefixBytes = []byte{b[i], b[i+1]}
+            i += PREFIXLENGTH       
+            prefix = int(binary.BigEndian.Uint16(prefixBytes)) 
+            // message overflow
+            if i + prefix > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            
+            value := string(b[i:i+prefix])
+            i += prefix      
+            
+            // assigning value    
+            
+            ret[string(key)] = string(value)
+        }                
+        //log.Println("am i getting here?")
+        incoming_handler <- &ret
+    }         
+    return 0
 }
 
 func PackMap(m *map[string]string) *[]byte {
