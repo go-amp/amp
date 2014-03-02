@@ -6,51 +6,51 @@ import "encoding/binary"
 
 var PREFIXLENGTH = 2
 
-func UnpackMapsOld(buffer *[]byte, length int, incoming_handler chan *map[string]string)  {
-    /*
-     * Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
-     * */
-    //log.Println("UnpackMap",length)
-    b := *buffer
-    var i int = 0  
-    //retList := list.New()
-    defer func() {
-        if r := recover(); r != nil {
-            log.Fatal("Recovered in f", r, b, i, length)
-        }
-    }()
+//func UnpackMapsOld(buffer *[]byte, length int, incoming_handler chan *map[string]string)  {
+    ///*
+     //* Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
+     //* */
+    ////log.Println("UnpackMap",length)
+    //b := *buffer
+    //var i int = 0  
+    ////retList := list.New()
+    ////defer func() {
+        ////if r := recover(); r != nil {
+            ////log.Fatal("Recovered in ", r, b, i, length)
+        ////}
+    ////}()
         
-    outer: 
-        for {
-            //ret := make(map[string]string)
-            ret := *resourceMap()
-            for {                
-                /* key
-                 * */
-                prefixBytes := []byte{b[i], b[i+1]}
-                i += PREFIXLENGTH        
-                prefix := int(binary.BigEndian.Uint16(prefixBytes))        
-                if i >= length { incoming_handler <- &ret; break outer }
-                if prefix == 0 { break }             
-                key := string(b[i:i+prefix])
-                i += prefix
-                /* value
-                 * */
-                prefixBytes = []byte{b[i], b[i+1]}
-                i += PREFIXLENGTH       
-                prefix = int(binary.BigEndian.Uint16(prefixBytes))        
-                if i >= length { break outer }
-                value := string(b[i:i+prefix])
-                i += prefix
-                //log.Println("unpacked -",key,":",value)
-                ret[string(key)] = string(value)
-            }
-            //log.Println("breaking early",ret)
-            //retList.PushBack(&ret)                    
-            incoming_handler <- &ret
-        }
-    //return retList
-}
+    //outer: 
+        //for {
+            ////ret := make(map[string]string)
+            //ret := *resourceMap()
+            //for {                
+                ///* key
+                 //* */
+                //prefixBytes := []byte{b[i], b[i+1]}
+                //i += PREFIXLENGTH        
+                //prefix := int(binary.BigEndian.Uint16(prefixBytes))        
+                //if i >= length { incoming_handler <- &ret; break outer }
+                //if prefix == 0 { break }             
+                //key := string(b[i:i+prefix])
+                //i += prefix
+                ///* value
+                 //* */
+                //prefixBytes = []byte{b[i], b[i+1]}
+                //i += PREFIXLENGTH       
+                //prefix = int(binary.BigEndian.Uint16(prefixBytes))        
+                //if i >= length { break outer }
+                //value := string(b[i:i+prefix])
+                //i += prefix
+                ////log.Println("unpacked -",key,":",value)
+                //ret[string(key)] = string(value)
+            //}
+            ////log.Println("breaking early",ret)
+            ////retList.PushBack(&ret)                    
+            //incoming_handler <- &ret
+        //}
+    ////return retList
+//}
 
 
 func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string]string) (int) {
@@ -75,7 +75,7 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
         for {                
             
             // message overflow
-            if i + PREFIXLENGTH > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
             
             prefixBytes := []byte{b[i], b[i+1]}
             i += PREFIXLENGTH        
@@ -90,14 +90,14 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
             key := string(b[i:i+prefix])
             i += prefix                
             // message overflow
-            if i + PREFIXLENGTH > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
             
             // handling value
             prefixBytes = []byte{b[i], b[i+1]}
             i += PREFIXLENGTH       
             prefix = int(binary.BigEndian.Uint16(prefixBytes)) 
             // message overflow
-            if i + prefix > READ_BUFFER_SIZE { recycleMap(&ret); return message_start }
+            if i + prefix > readBytes { recycleMap(&ret); return message_start }
             
             value := string(b[i:i+prefix])
             i += prefix      

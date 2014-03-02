@@ -141,6 +141,12 @@ func (c *Client) Reader() {
     packet_slice := make([]byte, 0)
     overflow_slice := make([]byte, 0)
     var overflow int = 0    
+    //var readBytes int
+    //defer func() {
+        //if r := recover(); r != nil {
+            //log.Fatal("Recovered in f", r, b, i, readBytes, message_start)
+        //}
+    //}()
     for {
         readBytes, error := c.Conn.Read(buffer) 
         if error != nil {
