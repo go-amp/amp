@@ -108,7 +108,7 @@ func (c *Client) IncomingAnswer(data *map[string]string) error {
             //case answer.Callback <- answer:
             //default:
         //}
-        answer.Callback <- answer
+        //answer.Callback <- answer
     }
     return nil
 }
@@ -164,11 +164,11 @@ func (c *Client) IncomingHandler() {
         data := <- c.incoming_handler
         m := *data
         if _,ok := m[ASK]; ok {
-            //err := c.IncomingAsk(data)
-            //if err != nil { log.Println("error:",err,m) }
+            err := c.IncomingAsk(data)
+            if err != nil { log.Println("error:",err,m) }
         } else if _,ok := m[ANSWER]; ok {
-            //err := c.IncomingAnswer(data)
-            //if err != nil { log.Println("error:",err,m) }            
+            err := c.IncomingAnswer(data)
+            if err != nil { log.Println("error:",err,m) }            
         } else {
             // XXX handle error packets
         }
