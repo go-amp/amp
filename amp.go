@@ -30,12 +30,12 @@ var call_deregistration = make(chan string)
 var call_registration = make(chan *CallBox)
 var call_dispatch = make(chan *map[string]string)
 
-func (prot *AMP) connectionListener(netListen net.Listener, service string) {
+func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) {
     clientNum := 0
     defer netListen.Close()
     log.Println("Waiting for clients") 
     for {
-        conn, err := netListen.Accept()
+        conn, err := netListen.AcceptTCP()
         if err != nil {
             log.Println("Client error: ", err)
             break
@@ -44,7 +44,7 @@ func (prot *AMP) connectionListener(netListen net.Listener, service string) {
             name := fmt.Sprintf("<%s<-%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())
             log.Println("AMP.connectionListener accepted",name)            
             //log.Println("name is",name)
-            ClientCreator(&name, &conn, prot)
+            ClientCreator(&name, conn, prot)
             //log.Println("Client created",newClient)            
         }
     }
@@ -98,7 +98,7 @@ func (prot *AMP) ListenTCP(service string) error {
         return err
     } else {
         log.Println("ListenTCP",*tcpAddr)
-        netListen, err := net.Listen(tcpAddr.Network(), tcpAddr.String())
+        netListen, err := net.ListenTCP(tcpAddr.Network(), tcpAddr)
         if err != nil {
             log.Println("Error: could not listen")
             return err
@@ -110,7 +110,13 @@ func (prot *AMP) ListenTCP(service string) error {
 }
 
 func (prot *AMP) ConnectTCP(service string) (*Client, error) {    
-    conn, err := net.Dial("tcp", service)
+    //conn, err := net.Dial("tcp", service)
+    serverAddr, err := net.ResolveTCPAddr("tcp", service)
+    if err != nil {
+        log.Println("error!",err)
+        return nil, err
+    }
+    conn, err := net.DialTCP("tcp", nil, serverAddr)
     if err != nil {
         log.Println("error!",err)
         return nil, err
@@ -118,7 +124,7 @@ func (prot *AMP) ConnectTCP(service string) (*Client, error) {
     name := fmt.Sprintf("<%s->%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())    
     log.Println("AMP.ConnectTCP connected",name)
         
-    newClient := ClientCreator(&name, &conn, prot)     
+    newClient := ClientCreator(&name, conn, prot)     
     return newClient, nil
 }
 

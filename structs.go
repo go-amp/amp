@@ -32,7 +32,7 @@ type AMP struct {
 
 type Client struct {
     Name string
-    Conn net.Conn
+    Conn net.TCPConn
     Protocol *AMP
     Quit chan bool
     Closed bool

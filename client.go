@@ -5,6 +5,7 @@ import "bytes"
 import "errors"
 import "fmt"
 import "net"
+import "time"
 //import "runtime"
 //import "encoding/binary"
 
@@ -38,7 +39,7 @@ func (c *Client) Equal(other *Client) bool {
     //return nil
 //}
 
-func ClientCreator(name *string, conn *net.Conn, prot *AMP) *Client {
+func ClientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
     quitChannel := make(chan bool)
     incoming_handler := make(chan *map[string]string)
     reply_handler := make(chan *Ask)
@@ -58,12 +59,19 @@ func (c *Client) CallRemote(call *CallBox) (string, error) {
     c.Protocol.Callbacks[tag] = call    
     call_mutex.Unlock()    
     send := PackMap(call.Arguments)    
+    c.Conn.SetWriteDeadline(time.Now().Add(1e9))
     _, err := c.Conn.Write(*send)        
+    
     if err != nil {         
+        neterr, ok := err.(net.Error)
+        if ok && neterr.Timeout() {
+            log.Println("error callremote",err) 
+            
+        }
         call_mutex.Lock()    
         delete(c.Protocol.Callbacks, tag)
         call_mutex.Unlock()
-        RecycleCallBox(call)        
+        RecycleCallBox(call)       
         return "", err  
     } 
     return tag, nil
@@ -110,7 +118,8 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
 func (c *Client) ReplyHandler() {
     for {
         ask := <- c.reply_handler   
-        send := PackMap(ask.Response)                
+        send := PackMap(ask.Response)          
+        c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
         _, err := c.Conn.Write(*send)    
         // XXX should probably close the client if not already if it's an error to send
         if err != nil {
