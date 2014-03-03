@@ -86,8 +86,11 @@ func (c *Client) IncomingAnswer(data *map[string]string) error {
         msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
         return errors.New(msg)
     } else {                
-        answer.Response = data   
-        answer.Callback <- answer        
+        answer.Response = data  
+        select { 
+            case answer.Callback <- answer:
+            default:
+        }
     }
     return nil
 }
@@ -107,8 +110,11 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
             response := *resourceMap()
             response[ANSWER] = m[ASK]
             ask.Response = &response
-            ask.ReplyChannel = c.reply_handler             
-            command.Responder <- ask            
+            ask.ReplyChannel = c.reply_handler   
+            select {          
+                case command.Responder <- ask:
+                default:
+            }
         }
     }
     return nil
