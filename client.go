@@ -133,8 +133,8 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //case command.Responder <- ask:
                 //default:
             //}
-            log.Println("buffer size",len(command.Responder))
-            //command.Responder <- ask
+            //log.Println("buffer size",len(command.Responder))
+            command.Responder <- ask
         }
     }
     return nil
@@ -194,7 +194,7 @@ func (c *Client) Reader() {
             c.Close()                     
             break
         }
-        
+        log.Println("received",readBytes,err)
         // this is probably slow as fuck but here we go
         packet_slice = append(overflow_slice, buffer[:readBytes]...)        
         overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
