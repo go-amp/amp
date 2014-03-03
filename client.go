@@ -87,10 +87,11 @@ func (c *Client) IncomingAnswer(data *map[string]string) error {
         return errors.New(msg)
     } else {                
         answer.Response = data  
-        select { 
-            case answer.Callback <- answer:
-            default:
-        }
+        //select { 
+            //case answer.Callback <- answer:
+            //default:
+        //}
+        answer.Callback <- answer
     }
     return nil
 }
@@ -111,10 +112,11 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
             response[ANSWER] = m[ASK]
             ask.Response = &response
             ask.ReplyChannel = c.reply_handler   
-            select {          
-                case command.Responder <- ask:
-                default:
-            }
+            //select {          
+                //case command.Responder <- ask:
+                //default:
+            //}
+            command.Responder <- ask
         }
     }
     return nil
