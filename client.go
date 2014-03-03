@@ -119,7 +119,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
         msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
         return errors.New(msg)
     } else { 
-        if command,ok := c.Protocol.Commands[commandName]; !ok {    
+        if _,ok := c.Protocol.Commands[commandName]; !ok {    
             msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
             return errors.New(msg)
         } else {
@@ -133,7 +133,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //case command.Responder <- ask:
                 //default:
             //}
-            command.Responder <- ask
+            //command.Responder <- ask
         }
     }
     return nil
