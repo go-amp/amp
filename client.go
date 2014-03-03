@@ -134,6 +134,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //default:
             //}
             //log.Println("buffer size",len(command.Responder))
+            log.Println("sending to responder")
             command.Responder <- ask
         }
     }
@@ -144,6 +145,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
 func (c *Client) ReplyHandler() {
     for {
         ask := <- c.reply_handler   
+        log.Println("in replyhandler")
         send := PackMap(ask.Response)          
         c.writer <- send
         //c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
@@ -163,7 +165,7 @@ func (c *Client) ReplyHandler() {
 func (c *Client) IncomingHandler() {
     for {
         data := <- c.incoming_handler
-        
+        log.Println("received data in IcomingHandler")
         m := *data
         if _,ok := m[ASK]; ok {
             err := c.IncomingAsk(data)
@@ -190,7 +192,7 @@ func (c *Client) Reader() {
     //}()
     for {
         readBytes, error := c.Conn.Read(buffer) 
-        log.Println("hi there3")
+        log.Println("received bytes",readBytes)
         if error != nil {
             log.Println("connection reader error!!",error)
             c.Close()                     
