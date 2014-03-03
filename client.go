@@ -177,9 +177,9 @@ func (c *Client) IncomingHandler() {
 
 func (c *Client) Reader() {    
     buffer := make([]byte, READ_BUFFER_SIZE)
-    packet_slice := make([]byte, 0)
-    overflow_slice := make([]byte, 0)
-    var overflow int = 0    
+    //packet_slice := make([]byte, 0)
+    //overflow_slice := make([]byte, 0)
+    //var overflow int = 0    
     //var readBytes int
     //defer func() {
         //if r := recover(); r != nil {
@@ -187,7 +187,7 @@ func (c *Client) Reader() {
         //}
     //}()
     for {
-        readBytes, error := c.Conn.Read(buffer) 
+        _, error := c.Conn.Read(buffer) 
         if error != nil {
             log.Println("connection reader error!!",error)
             c.Close()                     
