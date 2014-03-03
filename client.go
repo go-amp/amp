@@ -177,9 +177,9 @@ func (c *Client) IncomingHandler() {
 
 func (c *Client) Reader() {    
     buffer := make([]byte, READ_BUFFER_SIZE)
-    //packet_slice := make([]byte, 0)
-    //overflow_slice := make([]byte, 0)
-    //var overflow int = 0    
+    packet_slice := make([]byte, 0)
+    overflow_slice := make([]byte, 0)
+    var overflow int = 0    
     //var readBytes int
     //defer func() {
         //if r := recover(); r != nil {
@@ -187,7 +187,7 @@ func (c *Client) Reader() {
         //}
     //}()
     for {
-        _, error := c.Conn.Read(buffer) 
+        readBytes, error := c.Conn.Read(buffer) 
         if error != nil {
             log.Println("connection reader error!!",error)
             c.Close()                     
@@ -195,14 +195,14 @@ func (c *Client) Reader() {
         }
         
         // this is probably slow as fuck but here we go
-        //packet_slice = append(overflow_slice, buffer[:readBytes]...)        
-        //overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
+        packet_slice = append(overflow_slice, buffer[:readBytes]...)        
+        overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
                 
-        //if overflow > 0 {            
-            //overflow_slice = packet_slice[overflow:]            
-        //} else if len(overflow_slice) > 0 {
-            //overflow_slice = packet_slice[0:0]
-
+        if overflow > 0 {            
+            overflow_slice = packet_slice[overflow:]            
+        } else if len(overflow_slice) > 0 {
+            overflow_slice = packet_slice[0:0]
+        }
         
                            
     }
