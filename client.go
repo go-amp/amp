@@ -43,10 +43,13 @@ func ClientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
     quitChannel := make(chan bool)
     incoming_handler := make(chan *map[string]string)
     reply_handler := make(chan *Ask)
-    client := &Client{*name, *conn, prot, quitChannel, false, incoming_handler, reply_handler} 
+    writer := make(chan *[]byte)
+    client := &Client{*name, *conn, prot, quitChannel, false, incoming_handler, reply_handler, writer} 
+    
     go client.Reader()
     go client.IncomingHandler()
     go client.ReplyHandler()
+    go client.IOHandler()
     return client
 }
 
@@ -59,21 +62,36 @@ func (c *Client) CallRemote(call *CallBox) (string, error) {
     c.Protocol.Callbacks[tag] = call    
     call_mutex.Unlock()    
     send := PackMap(call.Arguments)    
-    c.Conn.SetWriteDeadline(time.Now().Add(1e9))
-    _, err := c.Conn.Write(*send)        
     
-    if err != nil {         
-        neterr, ok := err.(net.Error)
-        if ok && neterr.Timeout() {
-            log.Panic("error callremote",neterr)             
-        } else { log.Panic(err) }
-        call_mutex.Lock()    
-        delete(c.Protocol.Callbacks, tag)
-        call_mutex.Unlock()
-        RecycleCallBox(call)       
-        return "", err  
-    } 
+    c.writer <- send
+    //_, err := c.Conn.Write(*send)        
+    
+    //if err != nil {         
+        //neterr, ok := err.(net.Error)
+        //if ok && neterr.Timeout() {
+            //log.Panic("error callremote",neterr)             
+        //} else { log.Panic(err) }
+        //call_mutex.Lock()    
+        //delete(c.Protocol.Callbacks, tag)
+        //call_mutex.Unlock()
+        //RecycleCallBox(call)       
+        //return "", err  
+    //} 
     return tag, nil
+}
+
+func (c *Client) IOHandler() {
+    for {
+        send := <- c.writer
+        c.Conn.SetWriteDeadline(time.Now().Add(1e9))
+        _, err := c.Conn.Write(*send)     
+        if err != nil {         
+            neterr, ok := err.(net.Error)
+            if ok && neterr.Timeout() {
+                log.Panic("error callremote",neterr)             
+            } else { log.Panic(err) }
+        }
+    }
 }
 
 
@@ -126,16 +144,17 @@ func (c *Client) ReplyHandler() {
     for {
         ask := <- c.reply_handler   
         send := PackMap(ask.Response)          
-        c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
-        _, err := c.Conn.Write(*send)    
+        c.writer <- send
+        //c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
+        //_, err := c.Conn.Write(*send)    
         // XXX should probably close the client if not already if it's an error to send
-        if err != nil {
+        //if err != nil {
             
-            neterr, ok := err.(net.Error)
-            if ok && neterr.Timeout() {
-                log.Panic("error callremote",err)             
-            } else { log.Panic("reply failed!",err) }
-        }    
+            //neterr, ok := err.(net.Error)
+            //if ok && neterr.Timeout() {
+                //log.Panic("error callremote",err)             
+            //} else { log.Panic("reply failed!",err) }
+        //}    
         recycleAskBox(ask)
     }
 }

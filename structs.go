@@ -38,4 +38,5 @@ type Client struct {
     Closed bool
     incoming_handler chan *map[string]string
     reply_handler chan *Ask
+    writer chan *[]byte
 }
