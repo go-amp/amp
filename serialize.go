@@ -82,7 +82,7 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
             prefix := int(binary.BigEndian.Uint16(prefixBytes))        
             
             // indicates end of incoming message
-            if prefix == 0 { if i >= readBytes { incoming_handler <- &ret; 
+            if prefix == 0 { if i >= readBytes { //incoming_handler <- &ret; 
                 return 0 } else { break } }                            
             // message overflow
             if i + prefix > readBytes { recycleMap(&ret); return message_start }
@@ -108,7 +108,7 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
             ret[string(key)] = string(value)
         }                
         //log.Println("am i getting here?")
-        incoming_handler <- &ret
+        //incoming_handler <- &ret
     }         
     return 0
 }
