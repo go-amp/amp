@@ -194,10 +194,10 @@ func (c *Client) Reader() {
     //}()
     for {
         log.Println("ready for new read..")
-        readBytes, error := c.Conn.Read(buffer) 
+        readBytes, err := c.Conn.Read(buffer) 
         log.Println("received bytes",readBytes)
-        if error != nil {
-            log.Println("connection reader error!!",error)
+        if err != nil {
+            log.Println("connection reader error!!",err)
             c.Close()                     
             break
         }
