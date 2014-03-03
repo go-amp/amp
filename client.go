@@ -203,14 +203,15 @@ func (c *Client) Reader() {
         }
         //log.Println("received",readBytes,error)
         // this is probably slow as fuck but here we go
-        packet_slice = append(overflow_slice, buffer[:readBytes]...)        
-        overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
+        time.Sleep(.1 * time.Second)
+        //packet_slice = append(overflow_slice, buffer[:readBytes]...)        
+        ////overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
             
-        if overflow > 0 {            
-            overflow_slice = packet_slice[overflow:]            
-        } else if len(overflow_slice) > 0 {
-            overflow_slice = packet_slice[0:0]
-        }
+        //if overflow > 0 {            
+            //overflow_slice = packet_slice[overflow:]            
+        //} else if len(overflow_slice) > 0 {
+            //overflow_slice = packet_slice[0:0]
+        //}
         
                            
     }
