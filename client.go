@@ -41,9 +41,9 @@ func (c *Client) Equal(other *Client) bool {
 
 func ClientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
     quitChannel := make(chan bool)
-    incoming_handler := make(chan *map[string]string, 100)
-    reply_handler := make(chan *Ask, 100)
-    writer := make(chan *[]byte, 100)
+    incoming_handler := make(chan *map[string]string)
+    reply_handler := make(chan *Ask)
+    writer := make(chan *[]byte)
     client := &Client{*name, *conn, prot, quitChannel, false, incoming_handler, reply_handler, writer} 
     
     go client.Reader()
@@ -62,7 +62,7 @@ func (c *Client) CallRemote(call *CallBox) (string, error) {
     c.Protocol.Callbacks[tag] = call    
     call_mutex.Unlock()    
     send := PackMap(call.Arguments)    
-    
+    log.Println("sending to write",send)
     c.writer <- send
     //_, err := c.Conn.Write(*send)        
     
@@ -84,6 +84,7 @@ func (c *Client) IOHandler() {
     for {
         send := <- c.writer
         //c.Conn.SetWriteDeadline(time.Now().Add(1e9))
+        log.Println("writing",send)
         _, err := c.Conn.Write(*send)     
         if err != nil {         }
             //neterr, ok := err.(net.Error)
