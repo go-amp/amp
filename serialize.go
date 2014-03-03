@@ -68,7 +68,7 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
         }
     }()
         
-   log.Println("hi there2")
+   
     for {            
         message_start = i
         ret := *resourceMap()      

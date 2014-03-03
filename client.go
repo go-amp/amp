@@ -190,6 +190,7 @@ func (c *Client) Reader() {
     //}()
     for {
         readBytes, error := c.Conn.Read(buffer) 
+        log.Println("hi there3")
         if error != nil {
             log.Println("connection reader error!!",error)
             c.Close()                     
