@@ -5,7 +5,7 @@ import "bytes"
 import "errors"
 import "fmt"
 import "net"
-import "time"
+//import "time"
 //import "runtime"
 //import "encoding/binary"
 
@@ -83,14 +83,14 @@ func (c *Client) CallRemote(call *CallBox) (string, error) {
 func (c *Client) IOHandler() {
     for {
         send := <- c.writer
-        c.Conn.SetWriteDeadline(time.Now().Add(1e9))
+        //c.Conn.SetWriteDeadline(time.Now().Add(1e9))
         _, err := c.Conn.Write(*send)     
-        if err != nil {         
-            neterr, ok := err.(net.Error)
-            if ok && neterr.Timeout() {
-                log.Panic("error callremote",neterr)             
-            } else { log.Panic(err) }
-        }
+        if err != nil {         }
+            //neterr, ok := err.(net.Error)
+            //if ok && neterr.Timeout() {
+                //log.Panic("error IOHandler: ",neterr)             
+            //} else { log.Panic(err) }
+        //}
     }
 }
 
