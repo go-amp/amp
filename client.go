@@ -5,7 +5,7 @@ import "bytes"
 import "errors"
 import "fmt"
 import "net"
-//import "time"
+import "time"
 //import "runtime"
 //import "encoding/binary"
 
@@ -203,7 +203,7 @@ func (c *Client) Reader() {
         }
         //log.Println("received",readBytes,error)
         // this is probably slow as fuck but here we go
-        time.Sleep(.1 * time.Second)
+        time.Sleep(100 * time.Millisecond)
         //packet_slice = append(overflow_slice, buffer[:readBytes]...)        
         ////overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
             
