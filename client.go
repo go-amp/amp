@@ -65,8 +65,8 @@ func (c *Client) CallRemote(call *CallBox) (string, error) {
     if err != nil {         
         neterr, ok := err.(net.Error)
         if ok && neterr.Timeout() {
-            log.Panic("error callremote",err)             
-        }
+            log.Panic("error callremote",neterr)             
+        } else { log.Panic(err) }
         call_mutex.Lock()    
         delete(c.Protocol.Callbacks, tag)
         call_mutex.Unlock()
@@ -130,11 +130,11 @@ func (c *Client) ReplyHandler() {
         _, err := c.Conn.Write(*send)    
         // XXX should probably close the client if not already if it's an error to send
         if err != nil {
-            log.Println("reply failed!",err)            
+            
             neterr, ok := err.(net.Error)
             if ok && neterr.Timeout() {
                 log.Panic("error callremote",err)             
-            }
+            } else { log.Panic("reply failed!",err) }
         }    
         recycleAskBox(ask)
     }
