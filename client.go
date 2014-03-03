@@ -9,7 +9,7 @@ import "net"
 //import "runtime"
 //import "encoding/binary"
 
-const READ_BUFFER_SIZE int = 81920
+const READ_BUFFER_SIZE int = 65535
 
 func (c *Client) Close() {
     //log.Println("Closing connection")
@@ -204,7 +204,7 @@ func (c *Client) Reader() {
         //log.Println("received",readBytes,error)
         // this is probably slow as fuck but here we go
         packet_slice = append(overflow_slice, buffer[:readBytes]...)        
-        //overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
+        overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
             
         if overflow > 0 {            
             overflow_slice = packet_slice[overflow:]            
