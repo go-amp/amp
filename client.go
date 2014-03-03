@@ -133,7 +133,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //case command.Responder <- ask:
                 //default:
             //}
-            if len(command.Responder) == 100 { log.Println("buffer full") }
+            log.Println("buffer size",len(command.Responder))
             command.Responder <- ask
         }
     }
