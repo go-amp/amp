@@ -41,9 +41,9 @@ func (c *Client) Equal(other *Client) bool {
 
 func ClientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
     quitChannel := make(chan bool)
-    incoming_handler := make(chan *map[string]string)
-    reply_handler := make(chan *Ask)
-    writer := make(chan *[]byte)
+    incoming_handler := make(chan *map[string]string, 100)
+    reply_handler := make(chan *Ask, 100)
+    writer := make(chan *[]byte, 100)
     client := &Client{*name, *conn, prot, quitChannel, false, incoming_handler, reply_handler, writer} 
     
     go client.Reader()
