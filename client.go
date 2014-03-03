@@ -134,7 +134,7 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //default:
             //}
             log.Println("buffer size",len(command.Responder))
-            command.Responder <- ask
+            //command.Responder <- ask
         }
     }
     return nil
