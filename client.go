@@ -133,8 +133,8 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
                 //case command.Responder <- ask:
                 //default:
             //}
-            log.Println("buffer size",len(command.Responder))
-            //command.Responder <- ask
+            //log.Println("buffer size",len(command.Responder))
+            command.Responder <- ask
         }
     }
     return nil
@@ -163,6 +163,7 @@ func (c *Client) ReplyHandler() {
 func (c *Client) IncomingHandler() {
     for {
         data := <- c.incoming_handler
+        log.Println("hi there")
         m := *data
         if _,ok := m[ASK]; ok {
             err := c.IncomingAsk(data)
