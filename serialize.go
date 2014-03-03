@@ -106,6 +106,8 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
             // assigning value    
             
             ret[string(key)] = string(value)
+            
+            log.Println("looping")
         }                
         //log.Println("am i getting here?")
         log.Println("sending to incoming2")
