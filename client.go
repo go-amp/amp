@@ -143,8 +143,8 @@ func (c *Client) IncomingAsk(data *map[string]string) error {
 func (c *Client) ReplyHandler() {
     for {
         ask := <- c.reply_handler   
-        send := PackMap(ask.Response)          
-        c.writer <- send
+        _ := PackMap(ask.Response)          
+        //c.writer <- send
         //c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
         //_, err := c.Conn.Write(*send)    
         // XXX should probably close the client if not already if it's an error to send
@@ -164,11 +164,11 @@ func (c *Client) IncomingHandler() {
         data := <- c.incoming_handler
         m := *data
         if _,ok := m[ASK]; ok {
-            //err := c.IncomingAsk(data)
-            //if err != nil { log.Println("error:",err,m) }
+            err := c.IncomingAsk(data)
+            if err != nil { log.Println("error:",err,m) }
         } else if _,ok := m[ANSWER]; ok {
-            //err := c.IncomingAnswer(data)
-            //if err != nil { log.Println("error:",err,m) }            
+            err := c.IncomingAnswer(data)
+            if err != nil { log.Println("error:",err,m) }            
         } else {
             // XXX handle error packets
         }
