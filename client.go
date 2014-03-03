@@ -194,7 +194,7 @@ func (c *Client) Reader() {
             c.Close()                     
             break
         }
-        log.Println("received",readBytes,err)
+        log.Println("received",readBytes,error)
         // this is probably slow as fuck but here we go
         packet_slice = append(overflow_slice, buffer[:readBytes]...)        
         overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
