@@ -84,6 +84,7 @@ func (c *Client) IOHandler() {
     for {
         send := <- c.writer
         //c.Conn.SetWriteDeadline(time.Now().Add(1e9))
+        //test := []byte("hello")
         log.Println("writing",send)
         _, err := c.Conn.Write(*send)     
         if err != nil {         }
@@ -203,8 +204,8 @@ func (c *Client) Reader() {
         //log.Println("received",readBytes,error)
         // this is probably slow as fuck but here we go
         packet_slice = append(overflow_slice, buffer[:readBytes]...)        
-        overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
-                
+        //overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
+            
         if overflow > 0 {            
             overflow_slice = packet_slice[overflow:]            
         } else if len(overflow_slice) > 0 {
