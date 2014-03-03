@@ -73,41 +73,41 @@ func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string
         message_start = i
         ret := *resourceMap()      
         for {                
-            
+            log.Println("looping0")
             // message overflow
             if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
-            
+            log.Println("looping1")
             prefixBytes := []byte{b[i], b[i+1]}
             i += PREFIXLENGTH        
             prefix := int(binary.BigEndian.Uint16(prefixBytes))        
-            
+            log.Println("looping2")
             // indicates end of incoming message
             if prefix == 0 { if i >= readBytes { log.Println("sending to incoming1"); incoming_handler <- &ret; 
                 return 0 } else { break } }                            
             // message overflow
             if i + prefix > readBytes { recycleMap(&ret); return message_start }
-            
+            log.Println("looping3")
             // handling key 
             key := string(b[i:i+prefix])
             i += prefix                
             // message overflow
             if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
-            
+            log.Println("looping4")
             // handling value
             prefixBytes = []byte{b[i], b[i+1]}
             i += PREFIXLENGTH       
             prefix = int(binary.BigEndian.Uint16(prefixBytes)) 
             // message overflow
             if i + prefix > readBytes { recycleMap(&ret); return message_start }
-            
+            log.Println("looping5")
             value := string(b[i:i+prefix])
             i += prefix      
             
             // assigning value    
-            
+            log.Println("looping6")
             ret[string(key)] = string(value)
             
-            log.Println("looping")
+            log.Println("looping..")
         }                
         //log.Println("am i getting here?")
         log.Println("sending to incoming2")
