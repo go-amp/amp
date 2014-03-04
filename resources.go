@@ -36,7 +36,7 @@ func ResourceCallBox() *CallBox {
             //log.Println("reusing callbox",callbox)
             return callbox
         default:
-            callbox = &CallBox{make(map[string]string), nil, nil, nil, nil}            
+            callbox = &CallBox{make(map[string]string), nil, nil, nil}            
             return callbox
             //log.Println("creating new callbox",callbox)
     }
@@ -55,8 +55,7 @@ func RecycleCallBox(callbox *CallBox) {
     if callbox.Response != nil {
         recycleMap(callbox.Response)
         callbox.Response = nil
-    }
-    callbox.Command = nil
+    }    
     callbox.Callback = nil
     callbox.CallbackArgs = nil
     select {

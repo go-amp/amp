@@ -16,8 +16,7 @@ type AskBox struct {
 
 type CallBox struct {
     Args map[string]string
-    Response *map[string]string
-    Command *string    
+    Response *map[string]string    
     Callback chan *CallBox
     CallbackArgs *interface{}
 }

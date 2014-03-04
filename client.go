@@ -98,11 +98,11 @@ func (c *Client) handleIncoming(data *map[string]string) {
     }
 }
 
-func (c *Client) Dispatch(box *CallBox) error {
+func (c *Client) CallRemote(commandName string, box *CallBox) error {
     tag := <- c.prot.tagger
     
     box.Args[ASK] = tag
-    box.Args[COMMAND] = *box.Command
+    box.Args[COMMAND] = commandName
     c.prot.registerCallback(box, tag)
     send := packMap(&box.Args) 
     _, err := c.Conn.Write(*send)
