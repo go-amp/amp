@@ -1,122 +1,99 @@
 package amp
 
-import "log"
-//import "container/list"
 import "encoding/binary"
+//import "log"
+import "fmt"
+import "errors"
 
-var PREFIXLENGTH = 2
+const PREFIXLENGTH = 2
 
-//func UnpackMapsOld(buffer *[]byte, length int, incoming_handler chan *map[string]string)  {
-    ///*
-     //* Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
-     //* */
-    ////log.Println("UnpackMap",length)
-    //b := *buffer
-    //var i int = 0  
-    ////retList := list.New()
-    ////defer func() {
-        ////if r := recover(); r != nil {
-            ////log.Fatal("Recovered in ", r, b, i, length)
-        ////}
-    ////}()
+//var count = 0
+
+func (c *Client) unpackMaps(buf []byte) []byte {    
+    //bytes_used := len(buf)
+    //start_count := count
+    for {
+        item, left, err := getNext(buf)
+        //log.Println(len(left),stop)
         
-    //outer: 
-        //for {
-            ////ret := make(map[string]string)
-            //ret := *resourceMap()
-            //for {                
-                ///* key
-                 //* */
-                //prefixBytes := []byte{b[i], b[i+1]}
-                //i += PREFIXLENGTH        
-                //prefix := int(binary.BigEndian.Uint16(prefixBytes))        
-                //if i >= length { incoming_handler <- &ret; break outer }
-                //if prefix == 0 { break }             
-                //key := string(b[i:i+prefix])
-                //i += prefix
-                ///* value
-                 //* */
-                //prefixBytes = []byte{b[i], b[i+1]}
-                //i += PREFIXLENGTH       
-                //prefix = int(binary.BigEndian.Uint16(prefixBytes))        
-                //if i >= length { break outer }
-                //value := string(b[i:i+prefix])
-                //i += prefix
-                ////log.Println("unpacked -",key,":",value)
-                //ret[string(key)] = string(value)
-            //}
-            ////log.Println("breaking early",ret)
-            ////retList.PushBack(&ret)                    
-            //incoming_handler <- &ret
-        //}
-    ////return retList
-//}
-
-
-func UnpackMaps(buffer *[]byte, readBytes int, incoming_handler chan *map[string]string) (int) {
-    /*
-     * Unpacks N number of maps from a []byte.  Maps are separate by a key length of 0.
-     * */
-    //log.Println("UnpackMap",length)
-    b := *buffer
-    i := 0
-    message_start := 0
-    //retList := list.New()
-    defer func() {
-        if r := recover(); r != nil {
-            log.Fatal("Recovered in f", r, b, i, readBytes, message_start)
+        if item != nil { 
+            //count++ 
+            c.handleIncoming(item)
         }
-    }()
         
-   
-    for {            
-        message_start = i
-        ret := *resourceMap()      
-        for {                
-            log.Println("looping0")
-            // message overflow
-            if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
-            log.Println("looping1")
-            prefixBytes := []byte{b[i], b[i+1]}
-            i += PREFIXLENGTH        
-            prefix := int(binary.BigEndian.Uint16(prefixBytes))        
-            log.Println("looping2")
-            // indicates end of incoming message
-            if prefix == 0 { if i >= readBytes { log.Println("sending to incoming1");// incoming_handler <- &ret; 
-                return 0 } else { break } }                            
-            // message overflow
-            if i + prefix > readBytes { recycleMap(&ret); return message_start }
-            log.Println("looping3")
-            // handling key 
-            key := string(b[i:i+prefix])
-            i += prefix                
-            // message overflow
-            if i + PREFIXLENGTH > readBytes { recycleMap(&ret); return message_start }
-            log.Println("looping4")
-            // handling value
-            prefixBytes = []byte{b[i], b[i+1]}
-            i += PREFIXLENGTH       
-            prefix = int(binary.BigEndian.Uint16(prefixBytes)) 
-            // message overflow
-            if i + prefix > readBytes { recycleMap(&ret); return message_start }
-            log.Println("looping5")
-            value := string(b[i:i+prefix])
-            i += prefix      
-            
-            // assigning value    
-            log.Println("looping6")
-            ret[string(key)] = string(value)
-            
-            log.Println("looping..")
-        }                
-        //log.Println("am i getting here?")
-        log.Println("sending to incoming2")
-        //incoming_handler <- &ret
-    }         
-    return 0
+        if err != nil { 
+            //log.Println("unpacked",count,"items","left",len(left))
+            //unpacked_count := count - start_count
+            //bytes_used = bytes_used - len(left)
+            //if unpacked_count == 0 { log.Println("wtf!!!!!!!!!!!!!!!!!!!",err) }
+            //if unpacked_count != bytes_used / 47 { log.Println("unpacked_count",unpacked_count,"not right for bytes used",bytes_used,err) }
+            return left 
+        } else { 
+            buf = left
+        }
+    }
 }
 
-func PackMap(m *map[string]string) *[]byte {
+func getNext(buf []byte) (*map[string]string, []byte, error) {
+    item := *resourceMap()
+    i := 0
+    length := len(buf)
+    for {        
+        
+        if i + PREFIXLENGTH > length { 
+            recycleMap(&item) 
+            return nil, buf, errors.New(fmt.Sprintf("stop1 %d",i))
+        }
+
+        prefixBytes := []byte{buf[i], buf[i+1]}
+        i += PREFIXLENGTH        
+        prefix := int(binary.BigEndian.Uint16(prefixBytes))        
+
+        // indicates end of incoming message
+        if prefix == 0 {             
+            if length == i {
+                return &item, buf[i:], errors.New("valid end of incoming message")
+            } else {
+                return &item, buf[i:], nil
+            }
+        }                            
+        
+        // message overflow
+        if i + prefix > length { 
+            recycleMap(&item)
+            return nil, buf, errors.New(fmt.Sprintf("stop2 %d",i))
+        }
+
+        // handling key 
+        key := string(buf[i:i+prefix])
+        i += prefix                
+        // message overflow
+        if i + PREFIXLENGTH > length { 
+            recycleMap(&item)
+            return nil, buf, errors.New(fmt.Sprintf("stop3 %d",i))
+        }
+
+        // handling value
+        prefixBytes = []byte{buf[i], buf[i+1]}
+        i += PREFIXLENGTH       
+        prefix = int(binary.BigEndian.Uint16(prefixBytes)) 
+        
+        // message overflow
+        if i + prefix > length { 
+            recycleMap(&item)
+            return nil, buf, errors.New(fmt.Sprintf("stop4 %d",i))
+        }
+        
+        // assigning value    
+        value := string(buf[i:i+prefix])
+        i += prefix
+        item[string(key)] = string(value)
+    
+    }
+}
+
+
+func packMap(m *map[string]string) *[]byte {
     //log.Println("packing - ",m)                       
     length := 0
     for k, v := range *m {         
@@ -164,5 +141,3 @@ func PackMap(m *map[string]string) *[]byte {
     return &array
     
 }
-
-

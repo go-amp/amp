@@ -1,219 +1,141 @@
 package amp
 
-import "log"
-import "bytes"
-import "errors"
-import "fmt"
 import "net"
+import "log"
 import "time"
-//import "runtime"
-//import "encoding/binary"
+import "fmt"
+import "errors"
+
+var ASK = "_ask"
+var ANSWER = "_answer"
+var COMMAND = "_command"
+/* not using these yet, as they are used uncomment */
+//var ERROR = "_error"
+//var ERROR_CODE = "_error_code"
+//var ERROR_DESCRIPTION = "_error_description"
+//var UNKNOWN_ERROR_CODE = "UNKNOWN"
+//var UNHANDLED_ERROR_CODE = "UNHANDLED"
+
+//var MAX_KEY_LENGTH = 0xff
+//var MAX_VALUE_LENGTH = 0xffff
 
 const READ_BUFFER_SIZE int = 65535
 
-func (c *Client) Close() {
-    //log.Println("Closing connection")
-    // XXX need to close the channels
-    c.Conn.Close()    
-}
+var bytes_received = 0
 
-func (c *Client) Equal(other *Client) bool {
-    if bytes.Equal([]byte(c.Name), []byte(other.Name)) {
-        if c.Conn == other.Conn {
-            return true
-        }
+func (c *Client) reader() {    
+    buf := make([]byte, READ_BUFFER_SIZE)
+    overflow := make([]byte, READ_BUFFER_SIZE)
+    left := buf[:0]
+    for {
+        //log.Println("ready for new read..")
+        n, err := c.Conn.Read(buf) 
+        //log.Println("received bytes",n)
+        if err != nil {
+            log.Println("connection reader error!!",err)        
+            c.Conn.Close() 
+            break    
+        }       
+        
+        bytes_received += n
+        
+        //log.Println("pre amount left is",left)
+        //if len(left) > 0 { log.Println("left...",len(left)) }
+        left = c.unpackMaps(append(overflow[:len(left)], buf[:n]...))
+        copy(overflow[:len(left)], left[:])
+        
+        //log.Println("amount left is",left)
+        //time.Sleep(100 * time.Millisecond)         
+        
+        //log.Println("bytes_received",bytes_received)               
     }
-    return false
 }
 
-// removing for simplicity for now
-//func CheckArgs(args *[]string, data *map[string]string) error {
-    //var arg string
-    //m := *data
-    //for _,arg = range *args {
-        //if _,ok := m[arg]; !ok {                            
-            //msg := fmt.Sprintf("Found missing argument `%s`",arg)
-            //return errors.New(msg)
-        //}
-    //}
-    //return nil
-//}
-
-func ClientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
-    quitChannel := make(chan bool)
-    incoming_handler := make(chan *map[string]string)
-    reply_handler := make(chan *Ask)
-    writer := make(chan *[]byte)
-    client := &Client{*name, *conn, prot, quitChannel, false, incoming_handler, reply_handler, writer} 
-    
-    go client.Reader()
-    go client.IncomingHandler()
-    go client.ReplyHandler()
-    go client.IOHandler()
+func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
+    client := &Client{name, conn, prot} 
+    go client.reader()
     return client
 }
 
-func (c *Client) CallRemote(call *CallBox) (string, error) {     
-    tag := <- boxcounter_producer 
-    m := *call.Arguments    
-    m[ASK] = tag
-    m[COMMAND] = call.Command.Name
-    call_mutex.Lock()    
-    c.Protocol.Callbacks[tag] = call    
-    call_mutex.Unlock()    
-    send := PackMap(call.Arguments)    
-    log.Println("sending to write",send)
-    c.writer <- send
-    //_, err := c.Conn.Write(*send)        
-    
-    //if err != nil {         
-        //neterr, ok := err.(net.Error)
-        //if ok && neterr.Timeout() {
-            //log.Panic("error callremote",neterr)             
-        //} else { log.Panic(err) }
-        //call_mutex.Lock()    
-        //delete(c.Protocol.Callbacks, tag)
-        //call_mutex.Unlock()
-        //RecycleCallBox(call)       
-        //return "", err  
-    //} 
-    return tag, nil
-}
-
-func (c *Client) IOHandler() {
-    for {
-        send := <- c.writer
-        //c.Conn.SetWriteDeadline(time.Now().Add(1e9))
-        //test := []byte("hello")
-        log.Println("writing",send)
-        _, err := c.Conn.Write(*send)     
-        if err != nil {         }
-            //neterr, ok := err.(net.Error)
-            //if ok && neterr.Timeout() {
-                //log.Panic("error IOHandler: ",neterr)             
-            //} else { log.Panic(err) }
-        //}
-    }
-}
-
-
-
-func (c *Client) IncomingAnswer(data *map[string]string) error {    
-    m := *data            
-    tag := m[ANSWER]    
-    if answer, ok := c.Protocol.GetCall(tag); !ok {
-        msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
-        return errors.New(msg)
-    } else {                
-        answer.Response = data  
-        //select { 
-            //case answer.Callback <- answer:
-            //default:
-        //}
-        //answer.Callback <- answer
-    }
-    return nil
-}
-
-func (c *Client) IncomingAsk(data *map[string]string) error {
+func (c *Client) incomingAsk(data *map[string]string) error {
     m := *data
     if commandName, ok := m[COMMAND]; !ok {
         msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
         return errors.New(msg)
     } else { 
-        if command,ok := c.Protocol.Commands[commandName]; !ok {    
+        if command_responder, ok := c.prot.getCommandResponder(commandName); !ok {    
             msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
             return errors.New(msg)
-        } else {
+        } else {            
             ask := resourceAskBox()   
-            ask.Arguments = data
-            response := *resourceMap()
-            response[ANSWER] = m[ASK]
-            ask.Response = &response
-            ask.ReplyChannel = c.reply_handler   
-            //select {          
-                //case command.Responder <- ask:
-                //default:
-            //}
-            //log.Println("buffer size",len(command.Responder))
-            log.Println("sending to responder")
-            command.Responder <- ask
+            ask.Args = data            
+            ask.client = c
+            ask.Response[ANSWER] = m[ASK]                    
+            command_responder <- ask
         }
     }
     return nil
 }
 
+func (c *Client) incomingAnswer(data *map[string]string) error {
+    m := *data            
+    tag := m[ANSWER]
+    if box, ok := c.prot.getCallback(tag); !ok {
+        msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
+        return errors.New(msg)
+    } else {                
+        box.Response = data  
+        box.Callback <- box
+    }
+    return nil
+}
 
-func (c *Client) ReplyHandler() {
-    for {
-        ask := <- c.reply_handler   
-        log.Println("in replyhandler")
-        send := PackMap(ask.Response)          
-        c.writer <- send
-        //c.Conn.SetWriteDeadline(time.Now().Add(1e9))      
-        //_, err := c.Conn.Write(*send)    
-        // XXX should probably close the client if not already if it's an error to send
-        //if err != nil {
-            
-            //neterr, ok := err.(net.Error)
-            //if ok && neterr.Timeout() {
-                //log.Panic("error callremote",err)             
-            //} else { log.Panic("reply failed!",err) }
-        //}    
-        recycleAskBox(ask)
+func (c *Client) handleIncoming(data *map[string]string) {
+    m := *data
+    if _,ok := m[ASK]; ok {
+        err := c.incomingAsk(data)        
+        if err != nil { log.Println("error: ",err) }
+    } else if _,ok := m[ANSWER]; ok {
+        err := c.incomingAnswer(data)        
+        if err != nil { log.Println("error: ",err) }
+    } else {
+        // XXX handle error packets
     }
 }
 
-func (c *Client) IncomingHandler() {
-    for {
-        data := <- c.incoming_handler
-        log.Println("received data in IcomingHandler")
-        m := *data
-        if _,ok := m[ASK]; ok {
-            err := c.IncomingAsk(data)
-            if err != nil { log.Println("error:",err,m) }
-        } else if _,ok := m[ANSWER]; ok {
-            err := c.IncomingAnswer(data)
-            if err != nil { log.Println("error:",err,m) }            
-        } else {
-            // XXX handle error packets
-        }
+func (c *Client) CallRemote(commandName string, box *CallBox) error {
+    tag := <- c.prot.tagger    
+    box.Args[ASK] = tag
+    box.Args[COMMAND] = commandName
+    c.prot.registerCallback(box, tag)
+    send := packMap(&box.Args) 
+    c.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
+    _, err := c.Conn.Write(*send)
+    if err != nil {
+        neterr, ok := err.(net.Error)
+        if ok && neterr.Timeout() {
+            log.Println("error callremote",neterr)             
+        } else { log.Println(err) }
+        return err
     }
+    return nil
 }
 
-func (c *Client) Reader() {    
-    buffer := make([]byte, READ_BUFFER_SIZE)
-    //packet_slice := make([]byte, 0)
-    //overflow_slice := make([]byte, 0)
-    //var overflow int = 0    
-    //var readBytes int
-    //defer func() {
-        //if r := recover(); r != nil {
-            //log.Fatal("Recovered in f", r, b, i, readBytes, message_start)
-        //}
-    //}()
-    for {
-        log.Println("ready for new read..")
-        readBytes, err := c.Conn.Read(buffer) 
-        log.Println("received bytes",readBytes)
-        if err != nil {
-            log.Println("connection reader error!!",err)
-            c.Close()                     
-            break
-        }
-        //log.Println("received",readBytes,error)
-        // this is probably slow as fuck but here we go
-        time.Sleep(100 * time.Millisecond)
-        //packet_slice = append(overflow_slice, buffer[:readBytes]...)        
-        ////overflow = UnpackMaps(&packet_slice, len(packet_slice), c.incoming_handler)        
-            
-        //if overflow > 0 {            
-            //overflow_slice = packet_slice[overflow:]            
-        //} else if len(overflow_slice) > 0 {
-            //overflow_slice = packet_slice[0:0]
-        //}
-        
-                           
+func (ask *AskBox) Reply() error {
+    send := packMap(&ask.Response) 
+    ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
+    _, err := ask.client.Conn.Write(*send)
+    recycleAskBox(ask)
+    if err != nil {
+        neterr, ok := err.(net.Error)
+        if ok && neterr.Timeout() {
+            log.Println("error callremote",neterr)             
+        } else { log.Println(err) }
+        return err
     }
+    
+    
+    return nil
 }
+
 

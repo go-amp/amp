@@ -1,37 +1,11 @@
 package amp
 
-/*
- * implements amp_diagram.svg
- * */
- 
-import "log"
 import "net"
+import "log"
 import "fmt"
 import "sync"
- 
-var ASK = "_ask"
-var ANSWER = "_answer"
-var COMMAND = "_command"
-/* not using these yet, as they are used uncomment */
-//var ERROR = "_error"
-//var ERROR_CODE = "_error_code"
-//var ERROR_DESCRIPTION = "_error_description"
-//var UNKNOWN_ERROR_CODE = "UNKNOWN"
-//var UNHANDLED_ERROR_CODE = "UNHANDLED"
 
-//var MAX_KEY_LENGTH = 0xff
-//var MAX_VALUE_LENGTH = 0xffff
-
-
-var boxcounter_mutex = &sync.Mutex{}
-var call_mutex = &sync.Mutex{}
-var boxcounter_producer = make(chan string)
-var call_deregistration = make(chan string)
-var call_registration = make(chan *CallBox)
-var call_dispatch = make(chan *map[string]string)
-
-func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) {
-    clientNum := 0
+func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) {    
     defer netListen.Close()
     log.Println("Waiting for clients") 
     for {
@@ -39,56 +13,14 @@ func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) 
         if err != nil {
             log.Println("Client error: ", err)
             break
-        } else {
-            clientNum += 1
+        } else {            
             name := fmt.Sprintf("<%s<-%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())
             log.Println("AMP.connectionListener accepted",name)            
-            //log.Println("name is",name)
-            ClientCreator(&name, conn, prot)
-            //log.Println("Client created",newClient)            
+            
+            clientCreator(&name, conn, prot)
+            
         }
     }
-}
-
-//func (prot *AMP) CallRegistrar() {
-    //for {
-        //select {
-            //case call := <- call_registration:
-                //m := *call.Arguments    
-                //tag := m[ASK]
-                //prot.Callbacks[tag] = call
-            //case data := <- call_dispatch:
-                //m := *data
-                //tag := m[ANSWER]
-                //answer, ok := prot.Callbacks[tag]
-                //if !ok { 
-                    //log.Println(fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)) 
-                //} else {
-                    //answer.Response = data   
-                    //answer.Callback <- answer
-                    //delete(prot.Callbacks, tag)
-                //}
-                
-            //case tag := <- call_deregistration:
-                //delete(prot.Callbacks, tag)
-        //}
-    //}
-//}
-
-func (prot *AMP) TagProduction() {
-    for {
-        prot.BoxCounter += 1
-        tag := fmt.Sprintf("%x", prot.BoxCounter)  
-        boxcounter_producer <- tag
-    }
-}
-
-func (prot *AMP) GetCall(tag string) (*CallBox, bool) {
-    call_mutex.Lock()    
-    call, ok := prot.Callbacks[tag]
-    delete(prot.Callbacks, tag)    
-    call_mutex.Unlock()
-    return call, ok    
 }
 
 func (prot *AMP) ListenTCP(service string) error {
@@ -110,7 +42,7 @@ func (prot *AMP) ListenTCP(service string) error {
 }
 
 func (prot *AMP) ConnectTCP(service string) (*Client, error) {    
-    //conn, err := net.Dial("tcp", service)
+    
     serverAddr, err := net.ResolveTCPAddr("tcp", service)
     if err != nil {
         log.Println("error!",err)
@@ -124,19 +56,48 @@ func (prot *AMP) ConnectTCP(service string) (*Client, error) {
     name := fmt.Sprintf("<%s->%s>", conn.LocalAddr().String(), conn.RemoteAddr().String())    
     log.Println("AMP.ConnectTCP connected",name)
         
-    newClient := ClientCreator(&name, conn, prot)     
+    newClient := clientCreator(&name, conn, prot)     
     return newClient, nil
 }
 
+func (prot *AMP) tagProduction() {
+    for {        
+        prot.boxCounter += 1
+        tag := fmt.Sprintf("%x", prot.boxCounter)          
+        prot.tagger <- tag
+    }
+}
 
-func Init(commands *map[string]*Command) *AMP {
-    connList := make(map[string]*Client)
-    boxCounter := 0
-    callbacks := make(map[string]*CallBox)    
-    prot := &AMP{connList, *commands, boxCounter, callbacks}     
-    //go prot.CallRegistrar()
-    go prot.TagProduction()    
-    log.Println("AMP initialized.")   
+func (prot *AMP) getCallback(tag string) (*CallBox, bool) {
+    prot.callbacks_mutex.Lock()
+    box, ok := prot.callbacks[tag]
+    delete(prot.callbacks, tag)
+    prot.callbacks_mutex.Unlock()
+    return box, ok
+}
+
+func (prot *AMP) registerCallback(box *CallBox, tag string) {
+    prot.callbacks_mutex.Lock()
+    prot.callbacks[tag] = box
+    prot.callbacks_mutex.Unlock()
+}
+
+func (prot *AMP) getCommandResponder(commandName string) (chan *AskBox, bool) {
+    prot.commands_mutex.Lock()
+    responder, ok := prot.commands[commandName]
+    prot.commands_mutex.Unlock()
+    return responder, ok
+}
+
+func (prot *AMP) RegisterResponder(name string, responder chan *AskBox) {
+    prot.commands_mutex.Lock()
+    prot.commands[name] = responder
+    prot.commands_mutex.Unlock()
+}
+
+func Init() *AMP { 
+    prot := &AMP{make(map[string]chan *AskBox), make(map[string]*CallBox), &sync.Mutex{}, &sync.Mutex{}, 0, make(chan string, 1)}
+    go prot.tagProduction()
     return prot
 }
 

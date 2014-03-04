@@ -1,42 +1,33 @@
 package amp
- 
-import "net"
 
-type Command struct {
-    Name string
-    Responder chan *Ask
-    Arguments []string
-    Response []string
+import "net"
+import "sync"
+
+type Client struct {
+    Name *string
+    Conn *net.TCPConn
+    prot *AMP
 }
 
-type Ask struct {
-    Arguments *map[string]string
-    Response *map[string]string
-    ReplyChannel chan *Ask    
+type AskBox struct {
+    Args *map[string]string
+    Response map[string]string
+    client *Client
 }
 
 type CallBox struct {
-    Arguments *map[string]string
-    Response *map[string]string
-    Command *Command    
+    Args map[string]string
+    Response *map[string]string    
     Callback chan *CallBox
     CallbackArgs *interface{}
 }
 
 type AMP struct {
-    ConnList map[string]*Client
-    Commands map[string]*Command
-    BoxCounter int
-    Callbacks map[string]*CallBox
+    commands map[string]chan *AskBox
+    callbacks map[string]*CallBox
+    commands_mutex *sync.Mutex
+    callbacks_mutex *sync.Mutex
+    boxCounter int
+    tagger chan string
 }
 
-type Client struct {
-    Name string
-    Conn net.TCPConn
-    Protocol *AMP
-    Quit chan bool
-    Closed bool
-    incoming_handler chan *map[string]string
-    reply_handler chan *Ask
-    writer chan *[]byte
-}
