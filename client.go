@@ -42,8 +42,9 @@ func (c *Client) reader() {
         //log.Println("pre amount left is",left)
         //if len(left) > 0 { log.Println("left...",len(left)) }
         left = c.unpackMaps(append(overflow[:len(left)], buf[:n]...))
+        if len(left) > READ_BUFFER_SIZE { log.Fatal(fmt.Sprintf("Client.reader overflow problem with overflow bytes `%d` greater then overflow buffer size of `%d`", len(left), READ_BUFFER_SIZE)) }
         copy(overflow[:len(left)], left[:])
-        
+                
         //log.Println("amount left is",left)
         //time.Sleep(100 * time.Millisecond)         
         
