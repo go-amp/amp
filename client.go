@@ -1,5 +1,8 @@
 package amp
 
+import "net"
+import "log"
+
 const READ_BUFFER_SIZE int = 65535
 
 func (c *Client) Reader() {    
