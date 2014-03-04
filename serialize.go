@@ -9,14 +9,17 @@ const PREFIXLENGTH = 2
 
 var count = 0
 
-func UnpackMaps(buf []byte) []byte {    
+func (c *Client) unpackMaps(buf []byte) []byte {    
     bytes_used := len(buf)
     start_count := count
     for {
         item, left, err := getNext(buf)
         //log.Println(len(left),stop)
         
-        if item != nil { count++ }
+        if item != nil { 
+            count++ 
+            c.handleIncoming(item)
+        }
         
         if err != nil { 
             //log.Println("unpacked",count,"items","left",len(left))
