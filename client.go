@@ -2,7 +2,7 @@ package amp
 
 import "net"
 import "log"
-//import "time"
+import "time"
 import "fmt"
 import "errors"
 
@@ -121,7 +121,7 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
 }
 
 func (c *Client) Reply(box *AskBox) error {
-    return nil
+    
     send := packMap(&box.Response) 
     c.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
     _, err := c.Conn.Write(*send)
@@ -132,6 +132,8 @@ func (c *Client) Reply(box *AskBox) error {
         } else { log.Println(err) }
         return err
     }
+    
+    return nil
 }
 
 
