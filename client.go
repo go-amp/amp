@@ -100,11 +100,11 @@ func (c *Client) handleIncoming(data *map[string]string) {
 
 func (c *Client) Dispatch(box *CallBox) error {
     tag := <- c.prot.tagger
-    m := *call.Args
-    m[ASK] = tag
-    m[COMMAND] = box.Command
+    
+    box.Args[ASK] = tag
+    box.Args[COMMAND] = *box.Command
     c.prot.registerCallback(box, tag)
-    send := packMap(&call.Args) 
+    send := packMap(&box.Args) 
     _, err := c.Conn.Write(*send)
     if err != nil {
         neterr, ok := err.(net.Error)
