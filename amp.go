@@ -68,6 +68,12 @@ func (prot *AMP) tagProduction() {
     }
 }
 
+func (prot *AMP) registerCallback(box *CallBox, tag string) {
+    prot.callbacks_mutex.Lock()
+    prot.callbacks[tag] = box
+    prot.callbacks_mutex.Unlock()
+}
+
 func (prot *AMP) RegisterResponder(name string, responder chan *AskBox) {
     prot.commands_mutex.Lock()
     prot.commands[name] = responder

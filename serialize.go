@@ -93,7 +93,7 @@ func getNext(buf []byte) (*map[string]string, []byte, error) {
 }
 
 
-func PackMap(m *map[string]string) *[]byte {
+func packMap(m *map[string]string) *[]byte {
     //log.Println("packing - ",m)                       
     length := 0
     for k, v := range *m {         

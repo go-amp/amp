@@ -100,7 +100,19 @@ func (c *Client) handleIncoming(data *map[string]string) {
 
 func (c *Client) Dispatch(box *CallBox) error {
     tag := <- c.prot.tagger
-    log.Println(tag)
+    m := *call.Args
+    m[ASK] = tag
+    m[COMMAND] = box.Command
+    c.prot.registerCallback(box, tag)
+    send := packMap(&call.Args) 
+    _, err := c.Conn.Write(*send)
+    if err != nil {
+        neterr, ok := err.(net.Error)
+        if ok && neterr.Timeout() {
+            log.Println("error callremote",neterr)             
+        } else { log.Println(err) }
+        return err
+    }
     return nil
 }
 
