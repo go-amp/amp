@@ -79,7 +79,7 @@ func (c *Client) incomingAsk(data *map[string]string) error {
 func (c *Client) incomingAnswer(data *map[string]string) error {
     m := *data            
     tag := m[ANSWER]
-    if box, ok := c.Protocol.GetCall(tag); !ok {
+    if box, ok := c.prot.getCallback(tag); !ok {
         msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
         return errors.New(msg)
     } else {                
