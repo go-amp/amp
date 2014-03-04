@@ -2,6 +2,7 @@ package amp
 
 import "net"
 import "log"
+import "time"
 
 const READ_BUFFER_SIZE int = 65535
 
@@ -9,14 +10,14 @@ func (c *Client) Reader() {
     buffer := make([]byte, READ_BUFFER_SIZE)
     for {
         //log.Println("ready for new read..")
-        _, err := c.Conn.Read(buffer) 
-        //log.Println("received bytes",readBytes)
+        n, err := c.Conn.Read(buffer) 
+        log.Println("received bytes",n)
         if err != nil {
             log.Println("connection reader error!!",err)        
             c.Conn.Close() 
             break    
         }        
-        //time.Sleep(300 * time.Millisecond)                        
+        time.Sleep(100 * time.Millisecond)                        
     }
 }
 
