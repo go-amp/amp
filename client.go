@@ -45,7 +45,7 @@ func (c *Client) reader() {
         copy(overflow[:len(left)], left[:])
         
         //log.Println("amount left is",left)
-        //time.Sleep(100 * time.Millisecond)         
+        time.Sleep(100 * time.Millisecond)         
         
         //log.Println("bytes_received",bytes_received)               
     }
