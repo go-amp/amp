@@ -125,6 +125,7 @@ func (ask *AskBox) Reply() error {
     send := packMap(&ask.Response) 
     ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
     _, err := ask.client.Conn.Write(*send)
+    recycleAskBox(ask)
     if err != nil {
         neterr, ok := err.(net.Error)
         if ok && neterr.Timeout() {
