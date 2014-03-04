@@ -91,3 +91,53 @@ func getNext(buf []byte) (*map[string]string, []byte, error) {
     
     }
 }
+
+
+func PackMap(m *map[string]string) *[]byte {
+    //log.Println("packing - ",m)                       
+    length := 0
+    for k, v := range *m {         
+        length += len(k)
+        length += PREFIXLENGTH
+        length += len(v)
+        length += PREFIXLENGTH
+        // 2 is prefixLength
+    }
+    //log.Println("length is",length)
+    var array = make([]byte, length + PREFIXLENGTH)
+    /*
+     * 2 null terminating bytes 
+     * - A single NUL will separate every key, and a double NUL separates
+      messages.  This provides some redundancy when debugging traffic dumps.
+      * */
+    start := 0
+    stop := 0
+    var prefix = make([]byte, PREFIXLENGTH)
+    for k, v := range *m {                 
+        /* for key
+         * */
+        length = len(k)
+        binary.BigEndian.PutUint16(prefix, uint16(length))
+        //log.Println(buf)
+        stop = start + PREFIXLENGTH
+        copy(array[start:stop], prefix)
+        start = stop
+        stop = start + length
+        copy(array[start:stop], k)
+        start = stop        
+        /* now for value
+         * */
+        length = len(v)
+        binary.BigEndian.PutUint16(prefix, uint16(length))
+        //log.Println(buf)
+        stop = start + PREFIXLENGTH
+        copy(array[start:stop], prefix)
+        start = stop
+        stop = start + length
+        copy(array[start:stop], v)
+        start = stop        
+    }
+    //log.Println(array)
+    return &array
+    
+}

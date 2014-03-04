@@ -27,5 +27,7 @@ type AMP struct {
     callbacks map[string]*CallBox
     commands_mutex *sync.Mutex
     callbacks_mutex *sync.Mutex
+    boxCounter int
+    tagger chan string
 }
 

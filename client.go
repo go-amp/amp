@@ -99,6 +99,8 @@ func (c *Client) handleIncoming(data *map[string]string) {
 }
 
 func (c *Client) Dispatch(box *CallBox) error {
+    tag := <- c.prot.tagger
+    log.Println(tag)
     return nil
 }
 
