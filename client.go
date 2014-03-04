@@ -69,6 +69,7 @@ func (c *Client) incomingAsk(data *map[string]string) error {
         } else {            
             ask := resourceAskBox()   
             ask.Args = data            
+            ask.client = c
             ask.Response[ANSWER] = m[ASK]                    
             command_responder <- ask
         }

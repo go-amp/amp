@@ -61,9 +61,9 @@ func (prot *AMP) ConnectTCP(service string) (*Client, error) {
 }
 
 func (prot *AMP) tagProduction() {
-    for {
+    for {        
         prot.boxCounter += 1
-        tag := fmt.Sprintf("%x", prot.boxCounter)  
+        tag := fmt.Sprintf("%x", prot.boxCounter)          
         prot.tagger <- tag
     }
 }
@@ -96,7 +96,7 @@ func (prot *AMP) RegisterResponder(name string, responder chan *AskBox) {
 }
 
 func Init() *AMP { 
-    prot := &AMP{make(map[string]chan *AskBox), make(map[string]*CallBox), &sync.Mutex{}, &sync.Mutex{}, 1, make(chan string, 1)}
+    prot := &AMP{make(map[string]chan *AskBox), make(map[string]*CallBox), &sync.Mutex{}, &sync.Mutex{}, 0, make(chan string, 1)}
     go prot.tagProduction()
     return prot
 }
