@@ -72,7 +72,7 @@ func resourceAskBox() *AskBox {
         case ask = <- askbox_resource:
             return ask
         default:
-            ask = &AskBox{nil, nil, nil}
+            ask = &AskBox{nil, make(map[string]string), nil}
             return ask
     }
 }
@@ -82,9 +82,8 @@ func recycleAskBox(ask *AskBox) {
         recycleMap(ask.Args)
         ask.Args = nil
     }
-    if ask.Response != nil {
-        recycleMap(ask.Response)
-        ask.Response = nil
+    for k, _ := range ask.Response {
+        delete(ask.Response, k)
     }
     ask.Client = nil    
     select {

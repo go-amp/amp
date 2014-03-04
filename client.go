@@ -68,10 +68,8 @@ func (c *Client) incomingAsk(data *map[string]string) error {
             return errors.New(msg)
         } else {            
             ask := resourceAskBox()   
-            ask.Args = data
-            response := *resourceMap()
-            response[ANSWER] = m[ASK]
-            ask.Response = &response            
+            ask.Args = data            
+            ask.Response[ANSWER] = m[ASK]                    
             command_responder <- ask
         }
     }
@@ -79,6 +77,15 @@ func (c *Client) incomingAsk(data *map[string]string) error {
 }
 
 func (c *Client) incomingAnswer(data *map[string]string) error {
+    m := *data            
+    tag := m[ANSWER]
+    if box, ok := c.Protocol.GetCall(tag); !ok {
+        msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
+        return errors.New(msg)
+    } else {                
+        box.Response = data  
+        box.Callback <- box
+    }
     return nil
 }
 

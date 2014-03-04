@@ -68,6 +68,14 @@ func (prot *AMP) tagProduction() {
     }
 }
 
+func (prot *AMP) getCallback(tag string) (*CallBox, bool) {
+    prot.callbacks_mutex.Lock()
+    box, ok := prot.callbacks[tag]
+    delete(prot.callbacks, box)
+    prot.callbacks_mutex.Unlock()
+    return box, ok
+}
+
 func (prot *AMP) registerCallback(box *CallBox, tag string) {
     prot.callbacks_mutex.Lock()
     prot.callbacks[tag] = box
