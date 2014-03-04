@@ -10,8 +10,9 @@ type Client struct {
 }
 
 type AskBox struct {
-    data *map[string]string
-    client *Client
+    Args *map[string]string
+    Response *map[string]string
+    Client *Client
 }
 
 type CallBox struct {

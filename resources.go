@@ -2,6 +2,7 @@ package amp
 
 var map_resource chan *map[string]string = make(chan *map[string]string, 100)
 var callbox_resource chan *CallBox = make(chan *CallBox, 100)
+var askbox_resource chan *AskBox = make(chan *AskBox, 100)
 
 func resourceMap() *map[string]string {
     var m *map[string]string    
@@ -63,4 +64,32 @@ func RecycleCallBox(callbox *CallBox) {
             callbox = nil
         default:
     }      
+}
+
+func resourceAskBox() *AskBox {
+    var ask *AskBox
+    select {
+        case ask = <- askbox_resource:
+            return ask
+        default:
+            ask = &AskBox{nil, nil, nil}
+            return ask
+    }
+}
+
+func recycleAskBox(ask *AskBox) {    
+    if ask.Args != nil {
+        recycleMap(ask.Args)
+        ask.Args = nil
+    }
+    if ask.Response != nil {
+        recycleMap(ask.Response)
+        ask.Response = nil
+    }
+    ask.Client = nil    
+    select {
+        case askbox_resource <- ask:
+            ask = nil
+        default:
+    }    
 }

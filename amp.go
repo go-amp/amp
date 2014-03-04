@@ -74,6 +74,13 @@ func (prot *AMP) registerCallback(box *CallBox, tag string) {
     prot.callbacks_mutex.Unlock()
 }
 
+func (prot *AMP) getCommandResponder(commandName string) (chan *AskBox, bool) {
+    prot.commands_mutex.Lock()
+    responder, ok := prot.commands[commandName]
+    prot.commands_mutex.Unlock()
+    return responder, ok
+}
+
 func (prot *AMP) RegisterResponder(name string, responder chan *AskBox) {
     prot.commands_mutex.Lock()
     prot.commands[name] = responder

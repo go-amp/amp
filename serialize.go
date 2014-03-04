@@ -1,32 +1,32 @@
 package amp
 
 import "encoding/binary"
-import "log"
+//import "log"
 import "fmt"
 import "errors"
 
 const PREFIXLENGTH = 2
 
-var count = 0
+//var count = 0
 
 func (c *Client) unpackMaps(buf []byte) []byte {    
-    bytes_used := len(buf)
-    start_count := count
+    //bytes_used := len(buf)
+    //start_count := count
     for {
         item, left, err := getNext(buf)
         //log.Println(len(left),stop)
         
         if item != nil { 
-            count++ 
+            //count++ 
             c.handleIncoming(item)
         }
         
         if err != nil { 
             //log.Println("unpacked",count,"items","left",len(left))
-            unpacked_count := count - start_count
-            bytes_used = bytes_used - len(left)
-            if unpacked_count == 0 { log.Println("wtf!!!!!!!!!!!!!!!!!!!",err) }
-            if unpacked_count != bytes_used / 47 { log.Println("unpacked_count",unpacked_count,"not right for bytes used",bytes_used,err) }
+            //unpacked_count := count - start_count
+            //bytes_used = bytes_used - len(left)
+            //if unpacked_count == 0 { log.Println("wtf!!!!!!!!!!!!!!!!!!!",err) }
+            //if unpacked_count != bytes_used / 47 { log.Println("unpacked_count",unpacked_count,"not right for bytes used",bytes_used,err) }
             return left 
         } else { 
             buf = left

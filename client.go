@@ -3,6 +3,8 @@ package amp
 import "net"
 import "log"
 //import "time"
+import "fmt"
+import "errors"
 
 var ASK = "_ask"
 var ANSWER = "_answer"
@@ -56,30 +58,23 @@ func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
 }
 
 func (c *Client) incomingAsk(data *map[string]string) error {
-    //m := *data
-    //if commandName, ok := m[COMMAND]; !ok {
-        //msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
-        //return errors.New(msg)
-    //} else { 
-        //if command,ok := c.prot.commands[commandName]; !ok {    
-            //msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
-            //return errors.New(msg)
-        //} else {
-            //ask := resourceAskBox()   
-            //ask.Arguments = data
-            //response := *resourceMap()
-            //response[ANSWER] = m[ASK]
-            //ask.Response = &response
-            //ask.ReplyChannel = c.reply_handler   
-            ////select {          
-                ////case command.Responder <- ask:
-                ////default:
-            ////}
-            ////log.Println("buffer size",len(command.Responder))
-            //log.Println("sending to responder")
-            //command.Responder <- ask
-        //}
-    //}
+    m := *data
+    if commandName, ok := m[COMMAND]; !ok {
+        msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
+        return errors.New(msg)
+    } else { 
+        if command_responder, ok := c.prot.getCommandResponder(commandName); !ok {    
+            msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
+            return errors.New(msg)
+        } else {            
+            ask := resourceAskBox()   
+            ask.Args = data
+            response := *resourceMap()
+            response[ANSWER] = m[ASK]
+            ask.Response = &response            
+            command_responder <- ask
+        }
+    }
     return nil
 }
 
@@ -90,9 +85,11 @@ func (c *Client) incomingAnswer(data *map[string]string) error {
 func (c *Client) handleIncoming(data *map[string]string) {
     m := *data
     if _,ok := m[ASK]; ok {
-        c.incomingAsk(data)        
+        err := c.incomingAsk(data)        
+        if err != nil { log.Println("error: ",err) }
     } else if _,ok := m[ANSWER]; ok {
-        c.incomingAnswer(data)        
+        err := c.incomingAnswer(data)        
+        if err != nil { log.Println("error: ",err) }
     } else {
         // XXX handle error packets
     }
