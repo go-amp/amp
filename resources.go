@@ -85,7 +85,7 @@ func recycleAskBox(ask *AskBox) {
     for k, _ := range ask.Response {
         delete(ask.Response, k)
     }
-    ask.Client = nil    
+    ask.client = nil    
     select {
         case askbox_resource <- ask:
             ask = nil

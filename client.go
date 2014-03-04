@@ -120,11 +120,10 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
     return nil
 }
 
-func (c *Client) Reply(box *AskBox) error {
-    
-    send := packMap(&box.Response) 
-    c.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
-    _, err := c.Conn.Write(*send)
+func (ask *AskBox) Reply() error {
+    send := packMap(&ask.Response) 
+    ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
+    _, err := ask.client.Conn.Write(*send)
     if err != nil {
         neterr, ok := err.(net.Error)
         if ok && neterr.Timeout() {
@@ -132,6 +131,7 @@ func (c *Client) Reply(box *AskBox) error {
         } else { log.Println(err) }
         return err
     }
+    
     
     return nil
 }

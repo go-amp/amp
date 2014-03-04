@@ -12,7 +12,7 @@ type Client struct {
 type AskBox struct {
     Args *map[string]string
     Response map[string]string
-    Client *Client
+    client *Client
 }
 
 type CallBox struct {
