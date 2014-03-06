@@ -2,7 +2,7 @@ package amp
 
 import "net"
 import "log"
-import "time"
+//import "time"
 import "fmt"
 import "errors"
 import "bufio"
@@ -95,7 +95,7 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
     c.prot.registerCallback(box, tag)
     buf := *pack(box.Args)     
     _, err := c.writer.Write(buf)    
-    c.writer.Write.Flush()
+    c.writer.Flush()
     if err != nil {
         log.Println(err)
         return err
@@ -108,7 +108,7 @@ func (ask *AskBox) Reply() error {
     //ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
     //_, err := ask.client.Conn.Write(*send)
     _, err := ask.client.writer.Write(buf) 
-    ask.client.writer.Write.Flush()   
+    ask.client.writer.Flush()   
     recycleAskBox(ask)
     if err != nil {
         log.Println(err) 
