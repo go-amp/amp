@@ -58,16 +58,16 @@ func (c *Client) incomingAsk(m map[string][]byte) error {
         msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
         return errors.New(msg)
     } else { 
-        if _, ok := c.prot.getCommandResponder(string(commandName)); !ok {    
+        if command_responder, ok := c.prot.getCommandResponder(string(commandName)); !ok {    
         
             msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
             return errors.New(msg)
         } else {            
-            //ask := resourceAskBox()   
-            //ask.Args = data            
-            //ask.client = c
-            //ask.Response[ANSWER] = m[ASK]                    
-            //command_responder <- ask
+            ask := resourceAskBox()   
+            ask.Args = data            
+            ask.client = c
+            ask.Response[ANSWER] = m[ASK]                    
+            command_responder <- ask
         }
     }
     return nil
@@ -81,8 +81,8 @@ func (c *Client) incomingAnswer(m map[string][]byte) error {
         msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
         return errors.New(msg)
     } else {                
-        //box.Response = data  
-        //box.Callback <- box
+        box.Response = data  
+        box.Callback <- box
     }
     return nil
 }
