@@ -94,9 +94,8 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
     box.Args[COMMAND] = []byte(commandName)
     c.prot.registerCallback(box, tag)
     buf := *pack(box.Args)     
-    _, err := c.Conn.Write(buf)
-    //_, err := c.writer.Write(buf)    
-    //c.writer.Flush()
+    _, err := c.writer.Write(buf)    
+    c.writer.Flush()
     if err != nil {
         log.Println(err)
         return err
@@ -107,9 +106,9 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
 func (ask *AskBox) Reply() error {
     buf := *pack(ask.Response) 
     //ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
-    _, err := ask.client.Conn.Write(buf)
-    //_, err := ask.client.writer.Write(buf) 
-    //ask.client.writer.Flush()   
+    //_, err := ask.client.Conn.Write(*send)
+    _, err := ask.client.writer.Write(buf) 
+    ask.client.writer.Flush()   
     recycleAskBox(ask)
     if err != nil {
         log.Println(err) 
