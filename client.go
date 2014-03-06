@@ -93,14 +93,10 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
     box.Args[ASK] = []byte(tag)
     box.Args[COMMAND] = []byte(commandName)
     c.prot.registerCallback(box, tag)
-    send := pack(box.Args) 
-    c.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
-    _, err := c.Conn.Write(*send)
+    buf := *pack(box.Args)     
+    _, err := c.writer.Write(buf)    
     if err != nil {
-        neterr, ok := err.(net.Error)
-        if ok && neterr.Timeout() {
-            log.Println("error callremote",neterr)             
-        } else { log.Println(err) }
+        log.Println(err)
         return err
     }
     return nil
