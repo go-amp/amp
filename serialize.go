@@ -2,8 +2,9 @@ package amp
 
 import "encoding/binary"
 //import "log"
-import "fmt"
-import "errors"
+//import "fmt"
+//import "errors"
+import "bufio"
 
 const PREFIXLENGTH = 2
 

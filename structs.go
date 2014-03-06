@@ -13,14 +13,14 @@ type Client struct {
 }
 
 type AskBox struct {
-    Args *map[string]string
-    Response map[string]string
+    Args map[string][]byte
+    Response map[string][]byte
     client *Client
 }
 
 type CallBox struct {
-    Args map[string]string
-    Response *map[string]string    
+    Args map[string][]byte
+    Response map[string][]byte
     Callback chan *CallBox
     CallbackArgs *interface{}
 }
