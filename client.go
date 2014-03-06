@@ -76,35 +76,47 @@ func (c *Client) incomingAsk(m map[string][]byte) error {
 func (c *Client) incomingAnswer(m map[string][]byte) error {
          
     tag := string(m[ANSWER])
-    if box, ok := c.prot.getCallback(tag); !ok {
+    if callback, ok := c.prot.getCallback(tag); !ok {
         
         msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
         return errors.New(msg)
     } else {                
-        box.Response = m
-        box.Callback <- box
+        
+        callback <- m
     }
     return nil
 }
 
-
-func (c *Client) CallRemote(commandName string, box *CallBox) error {
+func (c *Client) CallRemote(command string, m map[string][]byte, callback chan map[string][]byte) error {
     tag := <- c.prot.tagger    
-    box.Args[ASK] = []byte(tag)
-    box.Args[COMMAND] = []byte(commandName)
-    c.prot.registerCallback(box, tag)
-    buf := *pack(box.Args)     
+    m[ASK] = []byte(tag)
+    m[COMMAND] = []byte(command)
+    c.prot.registerCallback(tag, callback)
+    buf := *pack(m)
     _, err := c.writer.Write(buf)    
     c.writer.Flush()
-    if err != nil {
-        log.Println(err)
-        return err
-    }
+    if err != nil { log.Println(err); return err }
     return nil
 }
+
+//func (c *Client) CallRemoteOld(commandName string, box *CallBox) error {
+    //tag := <- c.prot.tagger    
+    //box.Args[ASK] = []byte(tag)
+    //box.Args[COMMAND] = []byte(commandName)
+    //c.prot.registerCallback(box, tag)
+    //buf := *pack(box.Args)     
+    //_, err := c.writer.Write(buf)    
+    //c.writer.Flush()
+    //if err != nil {
+        //log.Println(err)
+        //return err
+    //}
+    //return nil
+//}
 
 func (ask *AskBox) Reply() error {
     buf := *pack(ask.Response) 
+    // old way of Write
     //ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
     //_, err := ask.client.Conn.Write(*send)
     _, err := ask.client.writer.Write(buf) 

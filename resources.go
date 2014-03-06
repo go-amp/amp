@@ -1,7 +1,7 @@
 package amp
 
 //var map_resource chan *map[string]string = make(chan *map[string]string, 100)
-var callbox_resource chan *CallBox = make(chan *CallBox, 100)
+//var callbox_resource chan *CallBox = make(chan *CallBox, 100)
 var askbox_resource chan *AskBox = make(chan *AskBox, 100)
 
 //func resourceMap() *map[string]string {
@@ -29,38 +29,38 @@ var askbox_resource chan *AskBox = make(chan *AskBox, 100)
     //}    
 //}
 
-func ResourceCallBox() *CallBox {
-    var callbox *CallBox
-    select {
-        case callbox = <- callbox_resource:
-            //callbox.Args = resourceMap()
-            //log.Println("reusing callbox",callbox)
-            return callbox
-        default:
-            callbox = &CallBox{make(map[string][]byte), make(map[string][]byte), nil, nil}            
-            return callbox
-            //log.Println("creating new callbox",callbox)
-    }
+//func ResourceCallBox() *CallBox {
+    //var callbox *CallBox
+    //select {
+        //case callbox = <- callbox_resource:
+            ////callbox.Args = resourceMap()
+            ////log.Println("reusing callbox",callbox)
+            //return callbox
+        //default:
+            //callbox = &CallBox{make(map[string][]byte), make(map[string][]byte), nil, nil}            
+            //return callbox
+            ////log.Println("creating new callbox",callbox)
+    //}
     
-}
+//}
 
-func RecycleCallBox(callbox *CallBox) {
+//func RecycleCallBox(callbox *CallBox) {
     
-    for k, _ := range callbox.Args {
-        delete(callbox.Args, k)
-    }
-    for k, _ := range callbox.Response {
-        delete(callbox.Response, k)
-    }
+    //for k, _ := range callbox.Args {
+        //delete(callbox.Args, k)
+    //}
+    //for k, _ := range callbox.Response {
+        //delete(callbox.Response, k)
+    //}
    
-    callbox.Callback = nil
-    callbox.CallbackArgs = nil
-    select {
-        case callbox_resource <- callbox:
-            callbox = nil
-        default:
-    }      
-}
+    //callbox.Callback = nil
+    //callbox.CallbackArgs = nil
+    //select {
+        //case callbox_resource <- callbox:
+            //callbox = nil
+        //default:
+    //}      
+//}
 
 func resourceAskBox() *AskBox {
     var ask *AskBox

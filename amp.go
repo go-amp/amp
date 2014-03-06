@@ -70,19 +70,33 @@ func (prot *AMP) tagProduction() {
     }
 }
 
-func (prot *AMP) getCallback(tag string) (*CallBox, bool) {
+//func (prot *AMP) getCallback(tag string) (*CallBox, bool) {
+    //prot.callbacks_mutex.Lock()
+    //box, ok := prot.callbacks[tag]
+    //delete(prot.callbacks, tag)
+    //prot.callbacks_mutex.Unlock()
+    //return box, ok
+//}
+
+func (prot *AMP) getCallback(tag string) (chan map[string][]byte, bool) {
     prot.callbacks_mutex.Lock()
-    box, ok := prot.callbacks[tag]
-    delete(prot.callbacks, tag)
-    prot.callbacks_mutex.Unlock()
-    return box, ok
+    defer prot.callbacks_mutex.Unlock()
+    callback, ok := prot.callbacks[tag]
+    return callback, ok
 }
 
-func (prot *AMP) registerCallback(box *CallBox, tag string) {
+//func (prot *AMP) registerCallback(box *CallBox, tag string) {
+    //prot.callbacks_mutex.Lock()
+    //prot.callbacks[tag] = box
+    //prot.callbacks_mutex.Unlock()
+//}
+
+func (prot *AMP) registerCallback(tag string, callback chan map[string][]byte) {
     prot.callbacks_mutex.Lock()
-    prot.callbacks[tag] = box
-    prot.callbacks_mutex.Unlock()
+    defer prot.callbacks_mutex.Unlock()
+    prot.callbacks[tag] = callback    
 }
+
 
 func (prot *AMP) getCommandResponder(commandName string) (chan *AskBox, bool) {
     prot.commands_mutex.Lock()
@@ -98,7 +112,7 @@ func (prot *AMP) RegisterResponder(name string, responder chan *AskBox) {
 }
 
 func Init() *AMP { 
-    prot := &AMP{make(map[string]chan *AskBox), make(map[string]*CallBox), &sync.Mutex{}, &sync.Mutex{}, 0, make(chan string, 1)}
+    prot := &AMP{make(map[string]chan *AskBox), make(map[string]chan map[string][]byte), &sync.Mutex{}, &sync.Mutex{}, 0, make(chan string, 1)}
     go prot.tagProduction()
     return prot
 }

@@ -18,16 +18,14 @@ type AskBox struct {
     client *Client
 }
 
-type CallBox struct {
-    Args map[string][]byte
-    Response map[string][]byte
-    Callback chan *CallBox
-    CallbackArgs *interface{}
-}
+//type CallBox struct {    
+    //Callback chan *CallBox
+    //CallbackArgs *interface{}
+//}
 
 type AMP struct {
     commands map[string]chan *AskBox
-    callbacks map[string]*CallBox
+    callbacks map[string]chan map[string][]byte
     commands_mutex *sync.Mutex
     callbacks_mutex *sync.Mutex
     boxCounter int
