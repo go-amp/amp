@@ -1,66 +1,61 @@
 package amp
 
-//var map_resource chan *map[string]string = make(chan *map[string]string, 100)
-//var callbox_resource chan *CallBox = make(chan *CallBox, 100)
+var map_resource chan map[string][]byte = make(chan map[string][]byte, 100)
+var callbox_resource chan *CallBox = make(chan *CallBox, 100)
 var askbox_resource chan *AskBox = make(chan *AskBox, 100)
 
-//func resourceMap() *map[string]string {
-    //var m *map[string]string    
-    //select {
-        //case m = <- map_resource:     
-            ////log.Println("reusing map",m)
-        //default:        
-            //r := make(map[string]string)            
-            //m = &r
-            ////log.Println("creating new map",m)
-    //}
-    //return m
-//}
+func ResourceMap() map[string][]byte {
+    var m map[string][]byte    
+    select {
+        case m = <- map_resource:     
+            return m
+        default:        
+            m = make(map[string][]byte)   
+            return m         
+    }
+    return m
+}
 
-//func recycleMap(m *map[string]string) { 
-    ////log.Println("recycling map",m)
-    //for k, _ := range *m {
-        //delete(*m, k)
-    //}
-    //select {
-        //case map_resource <- m:
-            //m = nil
-        //default:
-    //}    
-//}
+func RecycleMap(m map[string][]byte) {     
+    for k, _ := range m {
+        delete(m, k)
+    }
+    select {
+        case map_resource <- m:
+            m = nil
+        default:
+    }    
+}
 
-//func ResourceCallBox() *CallBox {
-    //var callbox *CallBox
-    //select {
-        //case callbox = <- callbox_resource:
-            ////callbox.Args = resourceMap()
-            ////log.Println("reusing callbox",callbox)
-            //return callbox
-        //default:
-            //callbox = &CallBox{make(map[string][]byte), make(map[string][]byte), nil, nil}            
-            //return callbox
-            ////log.Println("creating new callbox",callbox)
-    //}
+func ResourceCallBox() *CallBox {
+    var callbox *CallBox
+    select {
+        case callbox = <- callbox_resource:            
+            return callbox
+        default:
+            callbox = &CallBox{make(map[string][]byte), make(map[string][]byte), nil, nil}            
+            return callbox            
+    }
     
-//}
+}
 
-//func RecycleCallBox(callbox *CallBox) {
+func RecycleCallBox(callbox *CallBox) {
     
-    //for k, _ := range callbox.Args {
-        //delete(callbox.Args, k)
-    //}
-    //for k, _ := range callbox.Response {
-        //delete(callbox.Response, k)
-    //}
+    for k, _ := range callbox.Args {
+        delete(callbox.Args, k)
+    }
+    for k, _ := range callbox.Response {
+        delete(callbox.Response, k)
+    }
    
-    //callbox.Callback = nil
-    //callbox.CallbackArgs = nil
-    //select {
-        //case callbox_resource <- callbox:
-            //callbox = nil
-        //default:
-    //}      
-//}
+    callbox.Callback = nil
+    callbox.CallbackArgs = nil
+    select {
+        case callbox_resource <- callbox:
+            callbox = nil
+        default:
+    }      
+}
 
 func resourceAskBox() *AskBox {
     var ask *AskBox

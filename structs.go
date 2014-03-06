@@ -18,10 +18,12 @@ type AskBox struct {
     client *Client
 }
 
-//type CallBox struct {    
-    //Callback chan *CallBox
-    //CallbackArgs *interface{}
-//}
+type CallBox struct {    
+    Args map[string][]byte
+    Response map[string][]byte
+    Callback chan *CallBox
+    CallbackArgs *interface{}
+}
 
 type AMP struct {
     commands map[string]chan *AskBox
