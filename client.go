@@ -45,7 +45,7 @@ func (c *Client) incoming() {
 }
 
 func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {    
-    //conn.SetNoDelay(false)
+    conn.SetNoDelay(false)
     writer := bufio.NewWriter(conn)
     reader := bufio.NewReader(conn)
     client := &Client{name, conn, prot, writer, reader} 
