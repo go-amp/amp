@@ -25,7 +25,7 @@ func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) 
 }
 
 func (prot *AMP) ListenTCP(service string) error {
-    tcpAddr, err := net.ResolveTCPAddr("tcp4", service) 
+    tcpAddr, err := net.ResolveTCPAddr("tcp", service) 
     if err != nil {
         log.Println("Error: Could not resolve address")
         return err
@@ -44,12 +44,12 @@ func (prot *AMP) ListenTCP(service string) error {
 
 func (prot *AMP) ConnectTCP(service string) (*Client, error) {    
     
-    serverAddr, err := net.ResolveTCPAddr("tcp4", service)
+    serverAddr, err := net.ResolveTCPAddr("tcp", service)
     if err != nil {
         log.Println("error!",err)
         return nil, err
     }
-    conn, err := net.DialTCP("tcp4", nil, serverAddr)
+    conn, err := net.DialTCP("tcp", nil, serverAddr)
     if err != nil {
         log.Println("error!",err)
         return nil, err
