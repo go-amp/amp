@@ -107,8 +107,8 @@ func (ask *AskBox) Reply() error {
     buf := *pack(ask.Response) 
     //ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
     //_, err := ask.client.Conn.Write(*send)
-    _, err := c.writer.Write(buf) 
-    c.writer.Write.Flush()   
+    _, err := ask.client.writer.Write(buf) 
+    ask.client.writer.Write.Flush()   
     recycleAskBox(ask)
     if err != nil {
         log.Println(err) 
