@@ -64,7 +64,7 @@ func (c *Client) incomingAsk(m map[string][]byte) error {
             return errors.New(msg)
         } else {            
             ask := resourceAskBox()   
-            ask.Args = data            
+            ask.Args = m            
             ask.client = c
             ask.Response[ANSWER] = m[ASK]                    
             command_responder <- ask
@@ -76,12 +76,12 @@ func (c *Client) incomingAsk(m map[string][]byte) error {
 func (c *Client) incomingAnswer(m map[string][]byte) error {
          
     tag := string(m[ANSWER])
-    if _, ok := c.prot.getCallback(tag); !ok {
+    if box, ok := c.prot.getCallback(tag); !ok {
         
         msg := fmt.Sprintf("callback for incoming answer `%s` not found!!", tag)        
         return errors.New(msg)
     } else {                
-        box.Response = data  
+        box.Response = m
         box.Callback <- box
     }
     return nil
