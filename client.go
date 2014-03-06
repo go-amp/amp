@@ -19,42 +19,26 @@ var COMMAND = "_command"
 //var MAX_KEY_LENGTH = 0xff
 //var MAX_VALUE_LENGTH = 0xffff
 
-const READ_BUFFER_SIZE int = 65535
 
 var bytes_received = 0
 
-func (c *Client) reader() {    
-    buf := make([]byte, READ_BUFFER_SIZE)
-    overflow := make([]byte, READ_BUFFER_SIZE)
-    left := buf[:0]
-    for {
-        //log.Println("ready for new read..")
-        n, err := c.Conn.Read(buf) 
-        //log.Println("received bytes",n)
-        if err != nil {
-            log.Println("connection reader error!!",err)        
-            c.Conn.Close() 
-            break    
-        }       
-        
-        bytes_received += n
-        
-        //log.Println("pre amount left is",left)
-        //if len(left) > 0 { log.Println("left...",len(left)) }
-        left = c.unpackMaps(append(overflow[:len(left)], buf[:n]...))
-        if len(left) > READ_BUFFER_SIZE { log.Fatal(fmt.Sprintf("Client.reader overflow problem with overflow bytes `%d` greater then overflow buffer size of `%d`", len(left), READ_BUFFER_SIZE)) }
-        copy(overflow[:len(left)], left[:])
-                
-        //log.Println("amount left is",left)
-        //time.Sleep(100 * time.Millisecond)         
-        
-        //log.Println("bytes_received",bytes_received)               
-    }
+func (c *Client) incoming() {        
+    
+    startTime := time.Now()    
+    for {    
+        m := make(map[string][]byte)
+        err := get(c.reader, m)
+        if err != nil { log.Println(err); break }
+        log.Println(m)        
+    } 
+    
 }
 
 func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
-    client := &Client{name, conn, prot} 
-    go client.reader()
+    client := &Client{name, conn, prot, writer, reader} 
+    writer := bufio.NewWriter(conn)
+    reader := bufio.NewReader(conn)
+    go client.incoming()
     return client
 }
 
