@@ -45,6 +45,7 @@ func (c *Client) incoming() {
 }
 
 func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {    
+    conn.SetNoDelay(false)
     writer := bufio.NewWriter(conn)
     reader := bufio.NewReader(conn)
     client := &Client{name, conn, prot, writer, reader} 
@@ -58,8 +59,7 @@ func (c *Client) incomingAsk(m map[string][]byte) error {
         msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
         return errors.New(msg)
     } else { 
-        if command_responder, ok := c.prot.getCommandResponder(string(commandName)); !ok {    
-        
+        if command_responder, ok := c.prot.getCommandResponder(string(commandName)); !ok {            
             msg := fmt.Sprintf("Incoming Ask command `%s` does not exist",commandName)
             return errors.New(msg)
         } else {            
