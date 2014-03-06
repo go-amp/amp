@@ -23,13 +23,22 @@ var COMMAND = "_command"
 var bytes_received = 0
 
 func (c *Client) incoming() {        
-    
-    startTime := time.Now()    
+    var err error
     for {    
         m := make(map[string][]byte)
-        err := get(c.reader, m)
+        err = get(c.reader, m)
         if err != nil { log.Println(err); break }
         log.Println(m)        
+        // handle m
+        if _,ok := m[ASK]; ok {
+            err = c.incomingAsk(m)        
+            if err != nil { log.Println("error: ",err) }
+        } else if _,ok := m[ANSWER]; ok {
+            err = c.incomingAnswer(m)        
+            if err != nil { log.Println("error: ",err) }
+        } else {
+            // XXX handle error packets
+        }
     } 
     
 }
@@ -42,8 +51,8 @@ func clientCreator(name *string, conn *net.TCPConn, prot *AMP) *Client {
     return client
 }
 
-func (c *Client) incomingAsk(data *map[string]string) error {
-    m := *data
+func (c *Client) incomingAsk(data map[string][]byte) error {
+    
     if commandName, ok := m[COMMAND]; !ok {
         msg := fmt.Sprintf("Incoming Ask data structure not valid, `%s` not found",COMMAND)
         return errors.New(msg)

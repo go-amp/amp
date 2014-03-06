@@ -2,11 +2,14 @@ package amp
 
 import "net"
 import "sync"
+import "bufio"
 
 type Client struct {
     Name *string
     Conn *net.TCPConn
     prot *AMP
+    writer *bufio.Writer
+    reader *bufio.Reader
 }
 
 type AskBox struct {
