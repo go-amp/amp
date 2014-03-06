@@ -29,7 +29,7 @@ func (c *Client) incoming() {
         m := make(map[string][]byte)
         err = get(c.reader, m)
         if err != nil { log.Println(err); break }
-        log.Println(m)        
+        
         // handle m
         if _,ok := m[ASK]; ok {
             err = c.incomingAsk(m)        
