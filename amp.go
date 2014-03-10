@@ -4,6 +4,25 @@ import "net"
 import "log"
 import "fmt"
 import "sync"
+import "time"
+import "runtime"
+
+var sent_count = 0
+var received_count = 0
+var stats_mutex = &sync.Mutex{}
+
+func Stats() {
+    for {
+        runtime.Gosched()        
+        time.Sleep(1 * time.Second)         
+        log.Println("amp. sent",sent_count,"received",received_count)
+        stats_mutex.Lock()
+        sent_count = 0
+        received_count = 0
+        stats_mutex.Unlock()
+           
+    }
+}
 
 func (prot *AMP) connectionListener(netListen *net.TCPListener, service string) {    
     defer netListen.Close()

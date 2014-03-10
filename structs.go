@@ -22,7 +22,7 @@ type CallBox struct {
     Args map[string][]byte
     Response map[string][]byte
     Callback chan *CallBox
-    CallbackArgs *interface{}
+    CallbackArgs interface{}
 }
 
 type AMP struct {

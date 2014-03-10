@@ -29,7 +29,9 @@ func (c *Client) incoming() {
         m := make(map[string][]byte)
         err = get(c.reader, m)
         if err != nil { log.Println(err); break }
-        
+        stats_mutex.Lock()
+        received_count++
+        stats_mutex.Unlock()
         // handle m
         if _,ok := m[ASK]; ok {
             err = c.incomingAsk(m)        
@@ -94,27 +96,33 @@ func (c *Client) CallRemote(commandName string, box *CallBox) error {
     box.Args[COMMAND] = []byte(commandName)
     c.prot.registerCallback(box, tag)
     buf := *pack(box.Args)     
-    _, err := c.writer.Write(buf)    
-    c.writer.Flush()
+    //_, err := c.writer.Write(buf)    
+    //c.writer.Flush()
+    _, err := c.Conn.Write(buf)
     if err != nil {
-        log.Println(err)
+        log.Println("amp.CallRemote err:",err)
         return err
     }
+    stats_mutex.Lock()
+    sent_count++
+    stats_mutex.Unlock()
     return nil
 }
 
 func (ask *AskBox) Reply() error {
     buf := *pack(ask.Response) 
     //ask.client.Conn.SetWriteDeadline(time.Now().Add(1e9)) 
-    //_, err := ask.client.Conn.Write(*send)
-    _, err := ask.client.writer.Write(buf) 
-    ask.client.writer.Flush()   
+    _, err := ask.client.Conn.Write(buf)
+    //_, err := ask.client.writer.Write(buf) 
+    //ask.client.writer.Flush()   
     recycleAskBox(ask)
     if err != nil {
-        log.Println(err) 
+        log.Println("amp.Reply err:",err) 
         return err
     }
-    
+    stats_mutex.Lock()
+    received_count++
+    stats_mutex.Unlock()
     
     return nil
 }
