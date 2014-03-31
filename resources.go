@@ -41,7 +41,7 @@ func ResourceCallBox() *CallBox {
             return callbox
             //log.Println("creating new callbox",callbox)
     }
-    
+    return callbox
 }
 
 func RecycleCallBox(callbox *CallBox) {
@@ -71,6 +71,7 @@ func resourceAskBox() *AskBox {
             ask = &AskBox{make(map[string][]byte), make(map[string][]byte), nil}
             return ask
     }
+    return ask
 }
 
 func recycleAskBox(ask *AskBox) {    
